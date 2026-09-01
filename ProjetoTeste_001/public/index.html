@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rota Limpa — Coleta de Resíduos do Recife</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="style.css">
+
+
+</head>
+<body>
+
+<header class="site-nav">
+  <div class="nav-inner">
+    <a href="#topo" class="brand"><span class="brand-truck">🚛</span> Rota Limpa <span class="brand-tag">RECIFE</span></a>
+    <button class="menu-toggle" id="menu-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="menu-painel">
+      <span class="bolinha"></span> Menu
+    </button>
+  </div>
+</header>
+
+<div class="menu-backdrop" id="menu-backdrop"></div>
+<nav class="menu-painel" id="menu-painel" aria-label="Menu principal">
+  <div class="menu-painel-topo">
+    <span>Navegar</span>
+    <button class="menu-fechar" id="menu-fechar" aria-label="Fechar menu">✕</button>
+  </div>
+  <a href="#topo" class="menu-item"><span class="emoji">🏠</span> Início</a>
+  <a href="#consultar" class="menu-item"><span class="emoji">🔍</span> Consultar rota</a>
+  <button type="button" class="menu-item destaque" id="menu-abrir-denuncia"><span class="emoji">📸</span> Denunciar</button>
+  <a href="#sobre" class="menu-item"><span class="emoji">ℹ️</span> Sobre o projeto</a>
+</nav>
+
+<button type="button" class="denuncia-fab" id="fab-denuncia">
+  <span class="emoji">📸</span> <span class="texto">Denunciar</span>
+</button>
+
+<section class="hero" id="topo">
+  <div class="hero-inner">
+    <span class="eyebrow">ODS 11 · Cidades e Comunidades Sustentáveis</span>
+    <h1 class="hero-title">Saiba quando o <em>caminhão</em> passa na sua rua.</h1>
+    <p class="hero-sub">Consulte o dia e o turno da coleta domiciliar em Recife, e denuncie pontos com lixo acumulado que a coleta não está alcançando.</p>
+
+    <div class="rota-animada" aria-hidden="true">
+      <div class="rota-linha"></div>
+      <div class="rota-caminhao">🚛</div>
+    </div>
+
+    <div class="search-panel">
+      <label for="busca-rua">Digite o nome da sua rua</label>
+      <div class="search-row" style="position:relative;">
+        <input type="text" id="busca-rua" placeholder="ex: Rua Aprígio Alves" autocomplete="off">
+        <button class="btn btn-primary" id="btn-buscar">Buscar</button>
+        <div id="sugestoes-lista" class="sugestoes-lista" hidden></div>
+      </div>
+      <p class="search-hint">Dado oficial: Portal de Dados Abertos da Prefeitura do Recife (Emlurb)</p>
+    </div>
+  </div>
+</section>
+
+<section id="consultar">
+  <div class="section-inner">
+    <div class="section-head">
+      <span class="kicker">Consulta de rota</span>
+      <h2 class="section-title">Resultados da busca</h2>
+      <p class="section-desc">Cada cartão abaixo é um trecho de rua com dia da semana, turno e faixa de horário estimada de passagem.</p>
+    </div>
+
+    <div id="resultados">
+      <div class="empty-state">
+        <strong>Nenhuma busca feita ainda</strong>
+        Digite o nome de uma rua no campo acima para ver os dias e horários de coleta.
+      </div>
+    </div>
+
+    <div id="mapa-resultado-wrap" class="mapa-resultado-wrap" hidden>
+      <div id="mapa-resultado"></div>
+      <p class="map-caption">📍 Localização aproximada do setor de coleta encontrado (o dado oficial não traz o traçado exato da rua).</p>
+    </div>
+
+    <div class="note-strip">
+      <strong>Por que não tem um horário exato (tipo "14h32")?</strong> A prefeitura informa apenas o turno (manhã, tarde ou noturno) e uma faixa estimada, porque o horário exato varia conforme o trânsito e a posição da rua na rota do caminhão naquele dia.
+    </div>
+  </div>
+</section>
+
+<div class="modal-backdrop" id="modal-denuncia-backdrop">
+  <div class="modal-denuncia" role="dialog" aria-modal="true" aria-labelledby="modal-denuncia-titulo">
+    <div class="modal-topo">
+      <div>
+        <h2 id="modal-denuncia-titulo">Viu lixo acumulado sem coleta? 🗑️</h2>
+        <p>Envie uma foto e a localização. Seu report entra no mapa e ajuda a mostrar onde a coleta está falhando.</p>
+      </div>
+      <button type="button" class="modal-fechar" id="modal-denuncia-fechar" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-corpo">
+      <div class="denuncia-grid">
+        <form class="form-card" id="form-denuncia">
+          <div class="geo-status" id="geo-status">
+            <span class="geo-dot pending" id="geo-dot"></span>
+            <span id="geo-text">Obtendo sua localização...</span>
+          </div>
+
+          <div class="field">
+            <label for="foto-input">Foto do local</label>
+            <div class="photo-drop" id="photo-drop">
+              <div id="photo-placeholder">
+                <div class="drop-label">Toque para tirar ou escolher uma foto</div>
+                <div class="drop-sub">JPG ou PNG, até 5MB</div>
+              </div>
+              <img id="photo-preview" style="display:none;">
+            </div>
+            <input type="file" id="foto-input" accept="image/*" capture="environment" class="visually-hidden">
+          </div>
+
+          <div class="field">
+            <label for="descricao-input">Descreva o local (opcional)</label>
+            <textarea id="descricao-input" placeholder="ex: esquina da Rua Turiaçú com Rua ABC, lixo acumulado há dias"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-coral" id="btn-enviar" style="width:100%;">Enviar denúncia</button>
+          <div class="form-msg" id="form-msg"></div>
+        </form>
+
+        <div>
+          <div id="map"></div>
+          <p class="map-caption">Pontos em vermelho: denúncias enviadas pela comunidade. O mapa é centralizado na sua localização atual.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="about-section" id="sobre">
+  <div class="section-inner">
+    <div class="section-head">
+      <span class="kicker">Sobre o projeto</span>
+      <h2 class="section-title">Tecnologia e participação cidadã</h2>
+      <p class="section-desc">Projeto acadêmico voltado ao ODS 11, unindo dados públicos de coleta a uma ferramenta de fiscalização colaborativa.</p>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-card">
+        <span class="num">DADOS</span>
+        <h3>Fonte oficial</h3>
+        <p>Roteiros de coleta obtidos do Portal de Dados Abertos da Prefeitura do Recife (Emlurb), sob licença ODbL.</p>
+      </div>
+      <div class="about-card">
+        <span class="num">LACUNA</span>
+        <h3>O que falta hoje</h3>
+        <p>Não existe rastreamento em tempo real do caminhão nem um canal simples para reportar pontos sem coleta.</p>
+      </div>
+      <div class="about-card">
+        <span class="num">PROPOSTA</span>
+        <h3>O que este site resolve</h3>
+        <p>Consulta rápida por rua e um canal de denúncia com foto e localização, visível num mapa colaborativo.</p>
+      </div>
+    </div>
+
+    <div class="stats-strip" id="stats-strip">
+      <div class="stat-box">
+        <span class="stat-num" id="stat-total">—</span>
+        <span class="stat-label">Denúncias recebidas</span>
+      </div>
+      <div class="stat-box stat-resolvido">
+        <span class="stat-num" id="stat-resolvidas">—</span>
+        <span class="stat-label">Já resolvidas</span>
+      </div>
+      <div class="stat-box stat-pendente">
+        <span class="stat-num" id="stat-pendentes">—</span>
+        <span class="stat-label">Aguardando coleta</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="brand" style="color:#fff; margin-bottom:10px;">Rota Limpa <span class="brand-tag">RECIFE</span></div>
+      <p style="max-width:40ch; margin:0;">Projeto acadêmico — Análise e Desenvolvimento de Sistemas.</p>
+    </div>
+    <div>
+      <span class="ods-badge">ODS 11 · Cidades Sustentáveis</span>
+      <p style="margin-top:14px;">Dados: <a href="https://dados.recife.pe.gov.br/dataset/roteiro-de-coleta" target="_blank" rel="noopener">Portal de Dados Abertos do Recife</a></p>
+      <p style="margin-top:6px;"><a href="admin.html">Área de moderação (Emlurb)</a></p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+/* ===================================================================
+   CONFIGURAÇÃO — troque pelos valores reais do seu projeto Firebase
+   (Configurações do projeto > Geral > Seus apps > SDK do Firebase)
+   =================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDIP9Zwg2Ufkw210_cfesBvP7PRi3QEyZ0",
+  authDomain: "coleta-lixo-recife.firebaseapp.com",
+  projectId: "coleta-lixo-recife",
+  storageBucket: "coleta-lixo-recife.firebasestorage.app",
+  messagingSenderId: "158419307316",
+  appId: "1:158419307316:web:f47439c482dd644399b361"
+};
+
+/* Cloudinary — troque pelo seu cloud name e preset */
+const CLOUDINARY_CLOUD_NAME = "fbywruuu";
+const CLOUDINARY_UPLOAD_PRESET = "rota-lixo-recife";
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
+
+<script src="app.js"></script>
+
+</body>
+</html>

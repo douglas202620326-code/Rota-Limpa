@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rota Limpa — Coleta de Resíduos do Recife</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="style.css">
+
+<script>
+  (function() {
+    const temaSalvo = localStorage.getItem('rota_limpa_tema');
+    if (temaSalvo === 'escuro' || (!temaSalvo && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('tema-escuro');
+    }
+  })();
+</script>
+</head>
+<body>
+
+<header class="site-nav">
+  <div class="nav-inner">
+    <a href="#topo" class="brand"><span class="brand-truck">🚛</span> Rota Limpa <span class="brand-tag">RECIFE</span></a>
+    <button class="menu-toggle" id="menu-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="menu-painel" aria-label="Abrir menu de navegação">
+      <span class="bolinha"></span> Menu
+    </button>
+  </div>
+</header>
+
+<div class="menu-backdrop" id="menu-backdrop"></div>
+<nav class="menu-painel" id="menu-painel" aria-label="Menu principal">
+  <div class="menu-painel-topo">
+    <span>Navegar</span>
+    <button class="menu-fechar" id="menu-fechar" aria-label="Fechar menu">✕</button>
+  </div>
+  <a href="#topo" class="menu-item"><span class="emoji">🏠</span> Início</a>
+  <a href="#consultar" class="menu-item"><span class="emoji">🔍</span> Consultar rota</a>
+  <button type="button" class="menu-item" id="menu-ecopontos"><span class="emoji">♻️</span> Ecopontos & Descarte</button>
+  <button type="button" class="menu-item" id="menu-minhas-denuncias"><span class="emoji">📋</span> Minhas denúncias</button>
+  <button type="button" class="menu-item destaque" id="menu-abrir-denuncia"><span class="emoji">📸</span> Denunciar</button>
+  <button type="button" class="menu-item" id="btn-tema" aria-label="Alternar tema claro e escuro">
+    <span class="emoji" id="tema-icone">🌙</span> <span id="tema-texto">Modo escuro</span>
+  </button>
+  <a href="#sobre" class="menu-item"><span class="emoji">ℹ️</span> Sobre o projeto</a>
+</nav>
+
+<button type="button" class="denuncia-fab" id="fab-denuncia" aria-label="Fazer uma denúncia de lixo acumulado">
+  <span class="emoji">📸</span> <span class="texto">Denunciar</span>
+</button>
+
+<section class="hero" id="topo">
+  <div class="hero-inner">
+    <span class="eyebrow">ODS 11 · Cidades e Comunidades Sustentáveis</span>
+    <h1 class="hero-title">Saiba quando o <em>caminhão</em> passa na sua rua.</h1>
+    <p class="hero-sub">Consulte o dia e o turno da coleta domiciliar em Recife, e denuncie pontos com lixo acumulado que a coleta não está alcançando.</p>
+
+    <div class="rota-animada" aria-hidden="true">
+      <div class="rota-linha"></div>
+      <div class="rota-caminhao">🚛</div>
+    </div>
+
+    <div class="search-panel">
+      <label for="busca-rua">Digite o nome da sua rua</label>
+      <div class="search-row" style="position:relative;">
+        <input type="text" id="busca-rua" placeholder="ex: Rua Aprígio Alves" autocomplete="off" aria-label="Nome da rua">
+        <button class="btn btn-primary" id="btn-buscar" aria-label="Buscar rotas de coleta">Buscar</button>
+        <div id="sugestoes-lista" class="sugestoes-lista" hidden></div>
+      </div>
+      <p class="search-hint">Dado oficial: Portal de Dados Abertos da Prefeitura do Recife (Emlurb)</p>
+    </div>
+  </div>
+</section>
+
+<section id="consultar">
+  <div class="section-inner">
+    <div class="section-head">
+      <span class="kicker">Consulta de rota</span>
+      <h2 class="section-title">Resultados da busca</h2>
+      <p class="section-desc">Cada cartão abaixo é um trecho de rua com dia da semana, turno e faixa de horário estimada de passagem.</p>
+    </div>
+
+    <div class="turno-filtros" id="turno-filtros" hidden>
+      <span class="turno-filtros-label">Filtrar turno:</span>
+      <button type="button" class="filtro-turno-btn ativo" data-turno="todos" aria-label="Mostrar todos os turnos">Todos</button>
+      <button type="button" class="filtro-turno-btn" data-turno="MANHA" aria-label="Filtrar por turno da Manhã">🌅 Manhã</button>
+      <button type="button" class="filtro-turno-btn" data-turno="TARDE" aria-label="Filtrar por turno da Tarde">☀️ Tarde</button>
+      <button type="button" class="filtro-turno-btn" data-turno="NOTURNO" aria-label="Filtrar por turno Noturno">🌙 Noite</button>
+    </div>
+
+    <div id="resultados">
+      <div class="empty-state">
+        <strong>Nenhuma busca feita ainda</strong>
+        Digite o nome de uma rua no campo acima para ver os dias e horários de coleta.
+      </div>
+    </div>
+
+    <div id="mapa-resultado-wrap" class="mapa-resultado-wrap">
+      <div class="mapa-topo-controles" style="margin-bottom:10px;">
+        <div class="mapa-filtros-bar" id="mapa-principal-filtros">
+          <button type="button" class="mapa-filtro-btn ativo" data-filtro-mapa="todas">Todas as Denúncias</button>
+          <button type="button" class="mapa-filtro-btn" data-filtro-mapa="pendente">🚨 Pendentes</button>
+          <button type="button" class="mapa-filtro-btn" data-filtro-mapa="resolvida">✨ Resolvidas</button>
+        </div>
+        <button type="button" class="btn-toggle-ecopontos" id="btn-toggle-ecopontos-principal" aria-label="Alternar exibição das EcoEstações no mapa">
+          <span class="eco-ico">♻️</span> <span id="texto-toggle-ecopontos-principal">Mostrar EcoPontos</span>
+        </button>
+      </div>
+      <div id="mapa-resultado"></div>
+      <p class="map-caption">📍 <strong>Mapa Integrado do Recife:</strong> Setores de coleta por turno (zonas coloridas), Denúncias da comunidade (vermelho = pendente, verde = resolvida) e EcoEstações (♻️).</p>
+    </div>
+
+    <div class="note-strip">
+      <strong>Por que não tem um horário exato (tipo "14h32")?</strong> A prefeitura informa apenas o turno (manhã, tarde ou noturno) e uma faixa estimada, porque o horário exato varia conforme o trânsito e a posição da rua na rota do caminhão naquele dia.
+    </div>
+  </div>
+</section>
+
+<!-- MODAL DE DENÚNCIA -->
+<div class="modal-backdrop" id="modal-denuncia-backdrop">
+  <div class="modal-denuncia" role="dialog" aria-modal="true" aria-labelledby="modal-denuncia-titulo">
+    <div class="modal-topo">
+      <div>
+        <h2 id="modal-denuncia-titulo">Viu lixo acumulado sem coleta? 🗑️</h2>
+        <p>Envie uma foto e a localização. Seu report entra no mapa e ajuda a mostrar onde a coleta está falhando.</p>
+      </div>
+      <button type="button" class="modal-fechar" id="modal-denuncia-fechar" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-corpo">
+      <div class="denuncia-grid">
+        <form class="form-card" id="form-denuncia">
+          <!-- Bloco de Autenticação Rápida -->
+          <div class="auth-box" id="auth-box">
+            <div id="auth-desconectado">
+              <span class="auth-box-titulo">Identificação do cidadão</span>
+              <p class="auth-box-desc">Conecte-se para poder acompanhar o status e marcar sua denúncia como resolvida quando o lixo for recolhido.</p>
+              <div class="auth-botoes">
+                <button type="button" class="btn btn-google" id="btn-login-google">
+                  <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                  Entrar com Google
+                </button>
+                <button type="button" class="btn btn-anonimo" id="btn-login-anonimo">
+                  👤 Enviar como Anônimo
+                </button>
+              </div>
+            </div>
+            <div id="auth-conectado" style="display:none;">
+              <div class="auth-usuario-info">
+                <span class="auth-dot-conectado"></span>
+                <span>Conectado como: <strong id="auth-user-nome">Carregando...</strong></span>
+              </div>
+              <button type="button" class="btn-logout-link" id="btn-auth-logout">Sair / Trocar conta</button>
+            </div>
+          </div>
+
+          <div class="geo-status" id="geo-status">
+            <span class="geo-dot pending" id="geo-dot"></span>
+            <span id="geo-text">Obtendo sua localização...</span>
+          </div>
+          <p class="geo-hint">💡 <strong>Dica:</strong> Toque/clique no mapa ou arraste o pin para ajustar o local exato da denúncia.</p>
+
+          <div class="field">
+            <label for="foto-input">Foto do local</label>
+            <div class="photo-drop" id="photo-drop">
+              <div id="photo-placeholder">
+                <div class="drop-label">Toque para tirar ou escolher uma foto</div>
+                <div class="drop-sub">JPG ou PNG, até 5MB</div>
+              </div>
+              <img id="photo-preview" style="display:none;">
+            </div>
+            <input type="file" id="foto-input" accept="image/*" capture="environment" class="visually-hidden">
+          </div>
+
+          <div class="field">
+            <label for="descricao-input">Descreva o local (opcional)</label>
+            <textarea id="descricao-input" placeholder="ex: esquina da Rua Turiaçú com Rua ABC, lixo acumulado há dias"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-coral" id="btn-enviar" style="width:100%;">Enviar denúncia</button>
+          <div class="form-msg" id="form-msg"></div>
+        </form>
+
+        <div>
+          <div class="mapa-topo-controles">
+            <div class="mapa-filtros-bar" id="mapa-filtros-denuncias">
+              <button type="button" class="mapa-filtro-btn ativo" data-filtro-mapa="todas">Todas</button>
+              <button type="button" class="mapa-filtro-btn" data-filtro-mapa="pendente">🚨 Pendentes</button>
+              <button type="button" class="mapa-filtro-btn" data-filtro-mapa="resolvida">✨ Resolvidas</button>
+            </div>
+            <button type="button" class="btn-toggle-ecopontos" id="btn-toggle-ecopontos-mapa" aria-label="Alternar exibição das EcoEstações no mapa">
+              <span class="eco-ico">♻️</span> <span id="texto-toggle-ecopontos">EcoPontos</span>
+            </button>
+          </div>
+          <div id="map"></div>
+          <p class="map-hint-interativo">📍 <strong>Clique no mapa</strong> ou arraste o marcador azul para posicionar a denúncia com precisão.</p>
+          <p class="map-caption">Pontos no mapa: denúncias da comunidade (verde = resolvida, vermelho = pendente, verde ♻️ = EcoEstações).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MINHAS DENÚNCIAS -->
+<div class="modal-backdrop" id="modal-minhas-denuncias-backdrop">
+  <div class="modal-denuncia modal-minhas-denuncias" role="dialog" aria-modal="true" aria-labelledby="modal-minhas-denuncias-titulo">
+    <div class="modal-topo">
+      <div>
+        <h2 id="modal-minhas-denuncias-titulo">Minhas Denúncias 📋</h2>
+        <p>Acompanhe os reports enviados por você e marque como resolvidos quando a coleta for realizada.</p>
+      </div>
+      <button type="button" class="modal-fechar" id="modal-minhas-denuncias-fechar" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-corpo">
+      <div id="minhas-denuncias-auth-alerta" class="auth-box" hidden>
+        <span class="auth-box-titulo">Identifique-se para ver suas denúncias</span>
+        <p class="auth-box-desc">Conecte-se com a mesma conta ou dispositivo usado ao enviar suas denúncias.</p>
+        <div class="auth-botoes" style="margin-top:12px;">
+          <button type="button" class="btn btn-google" id="btn-minhas-google">
+            <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+            Entrar com Google
+          </button>
+          <button type="button" class="btn btn-anonimo" id="btn-minhas-anonimo">
+            👤 Continuar como Anônimo
+          </button>
+        </div>
+      </div>
+
+      <div id="minhas-denuncias-lista">
+        <div class="loading-state">Carregando suas denúncias...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESOLVER DENÚNCIA (COM FOTO DEPOIS) -->
+<div class="modal-backdrop" id="modal-resolver-denuncia-backdrop">
+  <div class="modal-denuncia modal-resolver-denuncia" role="dialog" aria-modal="true" aria-labelledby="modal-resolver-titulo">
+    <div class="modal-topo">
+      <div>
+        <h2 id="modal-resolver-titulo">Comprovar Resolução ✨</h2>
+        <p>Confirme que o lixo foi recolhido. Você pode anexar uma foto mostrando o local limpo.</p>
+      </div>
+      <button type="button" class="modal-fechar" id="modal-resolver-fechar" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-corpo">
+      <form class="form-card" id="form-resolver-denuncia">
+        <div class="field">
+          <label for="foto-resolvida-input">Foto do local limpo (opcional mas recomendado)</label>
+          <div class="photo-drop" id="photo-resolvida-drop">
+            <div id="photo-resolvida-placeholder">
+              <div class="drop-label">📸 Toque para tirar ou escolher a foto do local limpo</div>
+              <div class="drop-sub">JPG ou PNG, até 5MB</div>
+            </div>
+            <img id="photo-resolvida-preview" style="display:none;" alt="Foto do local limpo">
+          </div>
+          <input type="file" id="foto-resolvida-input" accept="image/*" capture="environment" class="visually-hidden">
+        </div>
+
+        <div class="field">
+          <label for="obs-resolvida-input">Observação (opcional)</label>
+          <textarea id="obs-resolvida-input" placeholder="ex: Caminhão passou pela manhã e o lixo foi recolhido."></textarea>
+        </div>
+
+        <div class="resolver-acoes-botoes">
+          <button type="submit" class="btn btn-primary btn-confirmar-limpeza" id="btn-confirmar-resolucao">
+            ✨ Confirmar Limpeza
+          </button>
+          <button type="button" class="btn btn-secundario" id="btn-concluir-sem-foto">
+            Concluir sem foto
+          </button>
+        </div>
+        <div class="form-msg" id="form-resolver-msg"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL GUIA DE ECOPONTOS (ECOESTAÇÕES) -->
+<div class="modal-backdrop" id="modal-ecopontos-backdrop">
+  <div class="modal-denuncia modal-ecopontos" role="dialog" aria-modal="true" aria-labelledby="modal-ecopontos-titulo">
+    <div class="modal-topo">
+      <div>
+        <h2 id="modal-ecopontos-titulo">Guia de Descarte & EcoEstações ♻️</h2>
+        <p>Pontos oficiais e gratuitos da Prefeitura do Recife (Emlurb) para descarte de entulho, podas, móveis e recicláveis.</p>
+      </div>
+      <button type="button" class="modal-fechar" id="modal-ecopontos-fechar" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-corpo">
+      <div class="ecoponto-info-box">
+        <h3>ℹ️ O que você pode descartar gratuitamente nas EcoEstações:</h3>
+        <div class="ecoponto-tags-grid">
+          <span class="tag-material">🧱 Entulho da construção (até 1m³/dia)</span>
+          <span class="tag-material">🌿 Podas e restos de jardinagem</span>
+          <span class="tag-material">🛋️ Móveis velhos e colchões</span>
+          <span class="tag-material">📦 Recicláveis (papel, plástico, vidro, metal)</span>
+          <span class="tag-material">💻 Eletroeletrônicos em geral</span>
+        </div>
+        <p class="ecoponto-horario-geral">⏰ <strong>Horário de funcionamento:</strong> Segunda a Sábado, das 8h às 16h.</p>
+      </div>
+
+      <div class="ecoponto-filtros-wrap">
+        <input type="text" id="busca-ecoponto" class="ecoponto-search-input" placeholder="🔍 Buscar por bairro, rua ou nome da EcoEstação..." autocomplete="off">
+        <div class="rpa-filtros" id="rpa-filtros">
+          <button type="button" class="filtro-rpa-btn ativo" data-rpa="todas">Todas as RPAs</button>
+          <button type="button" class="filtro-rpa-btn" data-rpa="RPA 1">RPA 1 (Centro)</button>
+          <button type="button" class="filtro-rpa-btn" data-rpa="RPA 2">RPA 2 (Norte)</button>
+          <button type="button" class="filtro-rpa-btn" data-rpa="RPA 3">RPA 3 (Noroeste)</button>
+          <button type="button" class="filtro-rpa-btn" data-rpa="RPA 4">RPA 4 (Oeste)</button>
+          <button type="button" class="filtro-rpa-btn" data-rpa="RPA 5">RPA 5 (Sudoeste)</button>
+          <button type="button" class="filtro-rpa-btn" data-rpa="RPA 6">RPA 6 (Sul)</button>
+        </div>
+      </div>
+
+      <div class="ecopontos-lista" id="ecopontos-lista">
+        <!-- Renderizado dinamicamente pelo JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="about-section" id="sobre">
+  <div class="section-inner">
+    <div class="section-head">
+      <span class="kicker">Sobre o projeto</span>
+      <h2 class="section-title">Tecnologia e participação cidadã</h2>
+      <p class="section-desc">Projeto acadêmico voltado ao ODS 11, unindo dados públicos de coleta a uma ferramenta de fiscalização colaborativa.</p>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-card">
+        <span class="num">DADOS</span>
+        <h3>Fonte oficial</h3>
+        <p>Roteiros de coleta obtidos do Portal de Dados Abertos da Prefeitura do Recife (Emlurb), sob licença ODbL.</p>
+      </div>
+      <div class="about-card">
+        <span class="num">LACUNA</span>
+        <h3>O que falta hoje</h3>
+        <p>Não existe rastreamento em tempo real do caminhão nem um canal simples para reportar pontos sem coleta.</p>
+      </div>
+      <div class="about-card">
+        <span class="num">PROPOSTA</span>
+        <h3>O que este site resolve</h3>
+        <p>Consulta rápida por rua e um canal de denúncia com foto e localização, visível num mapa colaborativo.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px; text-align: center;">
+      <button type="button" class="btn btn-primary" id="btn-ecopontos-sobre" style="display:inline-flex; align-items:center; gap:8px;">
+        ♻️ Consultar Ecopontos e EcoEstações do Recife
+      </button>
+    </div>
+
+    <div class="stats-strip" id="stats-strip">
+      <div class="stat-box">
+        <span class="stat-num" id="stat-total">—</span>
+        <span class="stat-label">Denúncias recebidas</span>
+      </div>
+      <div class="stat-box stat-resolvido">
+        <span class="stat-num" id="stat-resolvidas">—</span>
+        <span class="stat-label">Já resolvidas</span>
+      </div>
+      <div class="stat-box stat-pendente">
+        <span class="stat-num" id="stat-pendentes">—</span>
+        <span class="stat-label">Aguardando coleta</span>
+      </div>
+    </div>
+
+    <div class="ranking-wrap" id="ranking-wrap" hidden>
+      <div class="ranking-head">
+        <span class="emoji" aria-hidden="true">🚨</span>
+        <div>
+          <h3 style="font-family:var(--display); font-size:1.4rem; margin:0 0 4px;">Setores mais denunciados</h3>
+          <p style="margin:0; color:var(--ink-soft); font-size:0.9rem;">Regiões de Recife com maior acúmulo de denúncias pendentes da comunidade.</p>
+        </div>
+      </div>
+      <div class="ranking-lista" id="ranking-lista"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="brand" style="color:#fff; margin-bottom:10px;">Rota Limpa <span class="brand-tag">RECIFE</span></div>
+      <p style="max-width:40ch; margin:0;">Projeto acadêmico — Análise e Desenvolvimento de Sistemas.</p>
+    </div>
+    <div>
+      <span class="ods-badge">ODS 11 · Cidades Sustentáveis</span>
+      <p style="margin-top:14px;">Dados: <a href="https://dados.recife.pe.gov.br/dataset/roteiro-de-coleta" target="_blank" rel="noopener">Portal de Dados Abertos do Recife</a></p>
+      <p style="margin-top:6px;"><a href="admin.html">Área de moderação (Emlurb)</a></p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+/* ===================================================================
+   CONFIGURAÇÃO — troque pelos valores reais do seu projeto Firebase
+   (Configurações do projeto > Geral > Seus apps > SDK do Firebase)
+   =================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDIP9Zwg2Ufkw210_cfesBvP7PRi3QEyZ0",
+  authDomain: "coleta-lixo-recife.firebaseapp.com",
+  projectId: "coleta-lixo-recife",
+  storageBucket: "coleta-lixo-recife.firebasestorage.app",
+  messagingSenderId: "158419307316",
+  appId: "1:158419307316:web:f47439c482dd644399b361"
+};
+
+/* Cloudinary — troque pelo seu cloud name e preset */
+const CLOUDINARY_CLOUD_NAME = "fbywruuu";
+const CLOUDINARY_UPLOAD_PRESET = "rota-lixo-recife";
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+window.db = db;
+window.auth = auth;
+console.log('[Firebase Init] Firebase App, Firestore e Auth inicializados com sucesso.');
+
+/* ===================================================================
+   FIREBASE APP CHECK (reCAPTCHA v3)
+   Substitua 'SUBSTITUA_PELA_SITE_KEY' pela sua Site Key do reCAPTCHA v3
+   obtida no Firebase Console > App Check > Apps.
+   =================================================================== */
+const RECAPTCHA_V3_SITE_KEY = "SUBSTITUA_PELA_SITE_KEY";
+if (typeof firebase.appCheck === 'function') {
+  if (RECAPTCHA_V3_SITE_KEY !== "SUBSTITUA_PELA_SITE_KEY") {
+    const appCheck = firebase.appCheck();
+    appCheck.activate(
+      new firebase.appCheck.ReCaptchaV3Provider(RECAPTCHA_V3_SITE_KEY),
+      true
+    );
+  } else {
+    console.info('[App Check] reCAPTCHA v3 configurado. Para ativar em produção, informe sua Site Key no Firebase Console.');
+  }
+}
+</script>
+
+<script src="app.js"></script>
+
+</body>
+</html>

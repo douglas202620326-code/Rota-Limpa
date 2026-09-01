@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Moderação — Rota Limpa</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+
+<header class="site-nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand"><span class="brand-truck">🚛</span> Rota Limpa <span class="brand-tag">ADMIN</span></a>
+    <a href="index.html" class="admin-voltar">← Voltar ao site</a>
+  </div>
+</header>
+
+<main class="admin-wrap">
+
+  <section class="admin-login" id="admin-login">
+    <div class="admin-login-card">
+      <h1>Área de moderação</h1>
+      <p>Acesso restrito à equipe da Emlurb. Digite a senha do projeto para continuar.</p>
+      <form id="form-login">
+        <input type="password" id="senha-input" placeholder="Senha de acesso" autocomplete="off" required>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Entrar</button>
+      </form>
+      <p class="admin-login-erro" id="login-erro" hidden>Senha incorreta. Tente novamente.</p>
+      <p class="admin-login-nota">⚠️ Protótipo acadêmico: esta senha fica no código do site e serve só para a demonstração — não é uma proteção real de dados.</p>
+    </div>
+  </section>
+
+  <section class="admin-painel" id="admin-painel" hidden>
+    <div class="admin-head">
+      <div>
+        <h1>Denúncias da comunidade</h1>
+        <p>Acompanhe os pontos reportados e marque como resolvidos quando a coleta for feita.</p>
+      </div>
+      <div class="admin-resumo">
+        <span><strong id="resumo-total">0</strong> no total</span>
+        <span class="pendente"><strong id="resumo-pendentes">0</strong> pendentes</span>
+        <span class="resolvida"><strong id="resumo-resolvidas">0</strong> resolvidas</span>
+      </div>
+    </div>
+
+    <div class="admin-filtros" id="admin-filtros">
+      <button type="button" class="filtro-btn ativo" data-filtro="todas">Todas</button>
+      <button type="button" class="filtro-btn" data-filtro="pendente">Pendentes</button>
+      <button type="button" class="filtro-btn" data-filtro="resolvida">Resolvidas</button>
+    </div>
+
+    <div id="admin-lista">
+      <div class="loading-state">Carregando denúncias...</div>
+    </div>
+  </section>
+
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDIP9Zwg2Ufkw210_cfesBvP7PRi3QEyZ0",
+  authDomain: "coleta-lixo-recife.firebaseapp.com",
+  projectId: "coleta-lixo-recife",
+  storageBucket: "coleta-lixo-recife.firebasestorage.app",
+  messagingSenderId: "158419307316",
+  appId: "1:158419307316:web:f47439c482dd644399b361"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
+
+<script src="admin.js"></script>
+
+</body>
+</html>

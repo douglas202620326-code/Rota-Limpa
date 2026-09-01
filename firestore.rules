@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Coleção "rotas": leitura pública, escrita bloqueada no cliente
+    match /rotas/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Coleção "denuncias":
+    // - Leitura pública
+    // - Criação: usuário autenticado (Google ou anônimo), autorId == request.auth.uid
+    // - Edição: permitido se for o autor da denúncia ou administrador autenticado
+    // - Exclusão: permitida apenas para administradores autenticados
+    match /denuncias/{denunciaId} {
+      allow read: if true;
+
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasAll(['foto', 'latitude', 'longitude', 'status', 'dataEnvio', 'autorId'])
+                    && request.resource.data.autorId == request.auth.uid
+                    && request.resource.data.foto is string
+                    && request.resource.data.foto.size() > 0
+                    && request.resource.data.foto.size() <= 2048
+                    && request.resource.data.latitude is number
+                    && request.resource.data.latitude >= -90.0 && request.resource.data.latitude <= 90.0
+                    && request.resource.data.longitude is number
+                    && request.resource.data.longitude >= -180.0 && request.resource.data.longitude <= 180.0
+                    && request.resource.data.status is string
+                    && (request.resource.data.status == 'pendente' || request.resource.data.status == 'resolvida')
+                    && request.resource.data.dataEnvio is timestamp
+                    && (!('descricao' in request.resource.data) || (request.resource.data.descricao is string && request.resource.data.descricao.size() <= 1000));
+
+      allow update: if request.auth != null && (
+                      // 1. O autor ou administrador atualizando status/resolução
+                      (
+                        (
+                          request.auth.uid == resource.data.autorId ||
+                          request.auth.token.firebase.sign_in_provider == 'password' ||
+                          request.auth.token.email != null
+                        )
+                        && (!('fotoResolvida' in request.resource.data) || request.resource.data.fotoResolvida == null || (request.resource.data.fotoResolvida is string && request.resource.data.fotoResolvida.size() <= 2048))
+                      )
+                      // 2. Qualquer usuário autenticado (incluindo anônimo) apoiando o chamado ("Eu também vi")
+                      || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['apoios'])
+                    );
+
+      allow delete: if request.auth != null && (
+                      request.auth.token.firebase.sign_in_provider == 'password' ||
+                      request.auth.token.email != null
+                    );
+    }
+  }
+}

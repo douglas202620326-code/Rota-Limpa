@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Moderação — Rota Limpa</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="admin.css">
+
+<script>
+  (function() {
+    const temaSalvo = localStorage.getItem('rota_limpa_tema');
+    if (temaSalvo === 'escuro' || (!temaSalvo && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('tema-escuro');
+    }
+  })();
+</script>
+</head>
+<body class="admin-body">
+
+<header class="site-nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand"><span class="brand-truck">🚛</span> Rota Limpa <span class="brand-tag">ADMIN</span></a>
+    <div class="admin-nav-actions">
+      <span class="admin-user-info" id="admin-user-info" hidden></span>
+      <button type="button" class="admin-btn-logout" id="btn-logout" aria-label="Sair da conta de administrador" hidden>Sair</button>
+      <a href="index.html" class="admin-voltar">← Voltar ao site</a>
+    </div>
+  </div>
+</header>
+
+<main class="admin-wrap">
+
+  <section class="admin-login" id="admin-login">
+    <div class="admin-login-card">
+      <h1>Área de moderação</h1>
+      <p>Acesso restrito à equipe da Emlurb. Digite seu e-mail e senha para continuar.</p>
+      <form id="form-login">
+        <label for="email-input" class="visually-hidden">E-mail institucional</label>
+        <input type="email" id="email-input" placeholder="E-mail de acesso" autocomplete="email" required>
+        <label for="senha-input" class="visually-hidden">Senha de acesso</label>
+        <input type="password" id="senha-input" placeholder="Senha de acesso" autocomplete="current-password" required>
+        <button type="submit" class="btn btn-primary" id="btn-entrar" style="width:100%;">Entrar</button>
+      </form>
+      <p class="admin-login-erro" id="login-erro" hidden></p>
+      <p class="admin-login-nota">🔒 Acesso restrito e protegido via Firebase Authentication.</p>
+    </div>
+  </section>
+
+  <section class="admin-painel" id="admin-painel" hidden>
+    <div class="admin-head">
+      <div>
+        <h1>Denúncias da comunidade</h1>
+        <p>Acompanhe os pontos reportados e marque como resolvidos quando a coleta for feita.</p>
+      </div>
+      <div class="admin-resumo">
+        <span><strong id="resumo-total">0</strong> no total</span>
+        <span class="pendente"><strong id="resumo-pendentes">0</strong> pendentes</span>
+        <span class="resolvida"><strong id="resumo-resolvidas">0</strong> resolvidas</span>
+      </div>
+    </div>
+
+    <div class="admin-acoes-topo">
+      <div class="admin-filtros" id="admin-filtros">
+        <button type="button" class="filtro-btn ativo" data-filtro="todas" aria-label="Filtrar todas as denúncias">Todas</button>
+        <button type="button" class="filtro-btn" data-filtro="pendente" aria-label="Filtrar denúncias pendentes">Pendentes</button>
+        <button type="button" class="filtro-btn" data-filtro="resolvida" aria-label="Filtrar denúncias resolvidas">Resolvidas</button>
+      </div>
+      <button type="button" class="btn btn-secundario btn-csv" id="btn-exportar-csv" aria-label="Exportar denúncias filtradas em formato CSV">
+        📥 Exportar CSV
+      </button>
+    </div>
+
+    <div id="admin-lista">
+      <div class="loading-state">Carregando denúncias...</div>
+    </div>
+
+    <div class="admin-paginacao" id="admin-paginacao" hidden>
+      <button type="button" class="btn btn-secundario" id="btn-carregar-mais" aria-label="Carregar mais 50 denúncias">
+        Carregar mais denúncias
+      </button>
+    </div>
+  </section>
+
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDIP9Zwg2Ufkw210_cfesBvP7PRi3QEyZ0",
+  authDomain: "coleta-lixo-recife.firebaseapp.com",
+  projectId: "coleta-lixo-recife",
+  storageBucket: "coleta-lixo-recife.firebasestorage.app",
+  messagingSenderId: "158419307316",
+  appId: "1:158419307316:web:f47439c482dd644399b361"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+</script>
+
+<script src="admin.js"></script>
+
+</body>
+</html>
