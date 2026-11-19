@@ -1,181 +1,1000 @@
 /* ===========================================================
-   PAINEL DE MODERAÇÃO — estilos próprios (usa as variáveis de style.css)
+   PAINEL DE MODERAÇÃO — ROTA LIMPA (admin.css)
+   Visual Claro e Futurista (Vidro, Menta, Turquesa e Coral)
    =========================================================== */
 
-.admin-body{ background:var(--paper); min-height:100vh; }
-
-.admin-voltar{
-  color:#fff; text-decoration:none; font-weight:700; font-size:0.9rem;
-  font-family:var(--body);
-}
-.admin-voltar:hover{ text-decoration:underline; }
-
-.admin-nav-actions{
-  display:flex; align-items:center; gap:14px;
-}
-.admin-user-info{
-  color:rgba(255,255,255,0.85); font-family:var(--mono); font-size:0.82rem;
-}
-.admin-btn-logout{
-  background:rgba(255,255,255,0.15); color:#fff; border:1.5px solid rgba(255,255,255,0.35);
-  padding:5px 12px; border-radius:20px; font-size:0.82rem; font-weight:700;
-  cursor:pointer; font-family:var(--body); transition:background 0.15s ease, border-color 0.15s ease;
-}
-.admin-btn-logout:hover{
-  background:var(--coral-deep); border-color:var(--coral-deep);
+/* ---------- CORPO E FUNDO ---------- */
+.admin-body {
+  position: relative;
+  background: #F4FAF7;
+  color: #0F3D33;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-.admin-wrap{ max-width:960px; margin:0 auto; padding:40px 24px 80px; }
-
-/* ---------- LOGIN ---------- */
-.admin-login{ display:flex; justify-content:center; padding-top:40px; }
-.admin-login-card{
-  background:var(--paper-card); border:3px solid var(--ink);
-  border-radius:var(--radius-lg); box-shadow:var(--shadow-pop);
-  padding:32px; max-width:420px; width:100%;
-}
-.admin-login-card h1{
-  font-family:var(--display); font-weight:600; font-size:1.6rem; margin:0 0 10px;
-}
-.admin-login-card p{ color:var(--ink-soft); margin:0 0 20px; font-size:0.92rem; }
-#form-login{ display:flex; flex-direction:column; gap:12px; }
-#email-input, #senha-input{
-  padding:12px 14px; border:2.5px solid var(--line); border-radius:var(--radius-sm);
-  font-family:var(--body); font-size:0.96rem; width:100%; box-sizing:border-box;
-}
-#email-input:focus, #senha-input:focus{ border-color:var(--ceu); outline:none; }
-.admin-login-erro{ color:var(--coral-deep); font-weight:700; font-size:0.88rem; margin:14px 0 0; }
-.admin-login-nota{
-  margin-top:18px; padding-top:16px; border-top:1.5px solid var(--line);
-  font-size:0.78rem; color:var(--ink-soft);
+/* Grade geométrica sutil no fundo */
+.admin-body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(43, 182, 115, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(43, 182, 115, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
 }
 
-/* ---------- CABEÇALHO DO PAINEL ---------- */
-.admin-head{
-  display:flex; flex-wrap:wrap; gap:20px; justify-content:space-between;
-  align-items:flex-end; margin-bottom:22px;
-}
-.admin-head h1{ font-family:var(--display); font-weight:600; font-size:2rem; margin:0 0 6px; }
-.admin-head p{ color:var(--ink-soft); margin:0; max-width:52ch; }
-.admin-resumo{ display:flex; gap:16px; font-size:0.9rem; font-family:var(--mono); }
-.admin-resumo strong{ font-size:1.2rem; display:block; font-family:var(--display); }
-.admin-resumo .pendente strong{ color:var(--coral-deep); }
-.admin-resumo .resolvida strong{ color:var(--folha-deep); }
-
-/* ---------- FILTROS E AÇÕES ---------- */
-.admin-acoes-topo{
-  display:flex; justify-content:space-between; align-items:center;
-  flex-wrap:wrap; gap:12px; margin-bottom:20px;
-}
-.admin-filtros{ display:flex; gap:10px; margin-bottom:0; }
-.filtro-btn{
-  background:var(--paper-card); border:2.5px solid var(--ink); color:var(--ink);
-  border-radius:20px; padding:8px 16px; font-weight:700; font-size:0.85rem;
-  cursor:pointer; transition:background .15s ease, color .15s ease;
-}
-.filtro-btn:hover{ background:var(--paper); }
-.filtro-btn.ativo{ background:var(--ink); color:#fff; }
-
-.btn-csv{
-  display:inline-flex; align-items:center; gap:6px;
-  padding:8px 16px; font-size:0.85rem;
+/* Manchas orgânicas de degradê (menta, turquesa e azul-claro) */
+.admin-body::after {
+  content: "";
+  position: fixed;
+  top: -120px;
+  right: -100px;
+  width: 680px;
+  height: 680px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 45% 45%, rgba(43, 182, 115, 0.22), rgba(46, 156, 202, 0.18) 50%, rgba(138, 226, 209, 0.14) 70%, transparent 80%);
+  filter: blur(65px);
+  pointer-events: none;
+  z-index: 0;
+  animation: flutuar-blob-admin 24s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
-.admin-paginacao{
-  display:flex; justify-content:center; padding-top:24px;
+@keyframes flutuar-blob-admin {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-90px, 80px, 0) scale(1.12); }
+  100% { transform: translate3d(-30px, 140px, 0) scale(0.94); }
 }
 
-/* ---------- CARTÕES DE DENÚNCIA ---------- */
-#admin-lista{ display:flex; flex-direction:column; gap:14px; }
-.denuncia-admin-card{
-  display:grid; grid-template-columns:140px 1fr; gap:18px;
-  background:var(--paper-card); border:2.5px solid var(--ink);
-  border-radius:var(--radius-md); padding:16px;
-  box-shadow:0 5px 0 rgba(31,42,36,0.9);
-}
-.denuncia-admin-card.resolvida{ opacity:0.72; }
-.denuncia-admin-foto{
-  width:140px; height:140px; border-radius:var(--radius-sm); overflow:hidden;
-  background:var(--paper); border:2px solid var(--line);
-}
-.denuncia-admin-foto img{ width:100%; height:100%; object-fit:cover; display:block; }
-.denuncia-admin-foto .sem-foto{
-  display:flex; align-items:center; justify-content:center; height:100%;
-  color:var(--ink-soft); font-size:0.78rem; text-align:center; padding:8px;
-}
-.denuncia-admin-topo{ display:flex; align-items:center; gap:12px; margin-bottom:8px; }
-.status-pill{
-  font-family:var(--mono); font-size:0.7rem; font-weight:700;
-  padding:5px 10px; border-radius:20px; text-transform:uppercase;
-  letter-spacing:0.04em; border:2px solid var(--ink);
-}
-.status-pill.pendente{ background:#FFB199; }
-.status-pill.resolvida{ background:var(--folha); color:#fff; border-color:var(--folha-deep); }
-.denuncia-admin-data{ font-size:0.78rem; color:var(--ink-soft); font-family:var(--mono); }
-.denuncia-admin-desc{ margin:0 0 8px; font-size:0.94rem; }
-.denuncia-admin-coord{ margin:0 0 14px; font-size:0.78rem; color:var(--ink-soft); font-family:var(--mono); }
-
-.denuncia-admin-acoes{
-  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
-}
-.btn-secundario{
-  background:var(--paper); color:var(--ink); border:2.5px solid var(--ink);
-  border-radius:30px; padding:9px 18px; font-weight:700; font-size:0.85rem; cursor:pointer;
-  transition:background .15s ease;
-}
-.btn-secundario:hover{ background:#fff; }
-.btn-perigo{
-  background:transparent; color:var(--coral-deep); border:2.5px solid var(--coral-deep);
-  border-radius:30px; padding:9px 18px; font-weight:700; font-size:0.85rem; cursor:pointer;
-  transition:background .15s ease, color .15s ease;
-}
-.btn-perigo:hover{ background:var(--coral-deep); color:#fff; }
-.btn-toggle-status:disabled, .btn-perigo:disabled{ opacity:0.6; cursor:default; }
-
-@media (max-width:560px){
-  .denuncia-admin-card{ grid-template-columns:1fr; }
-  .denuncia-admin-foto{ width:100%; height:180px; }
-  .denuncia-admin-acoes{ flex-direction:column; align-items:stretch; }
+.admin-wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 36px 24px 80px;
 }
 
-/* ---------- MODO ESCURO NO ADMIN (html.tema-escuro) ---------- */
-html.tema-escuro .admin-login-card{
-  background:var(--paper-card); border-color:var(--line); box-shadow:var(--shadow-pop);
-}
-html.tema-escuro #email-input, html.tema-escuro #senha-input{
-  background:var(--paper); color:var(--ink); border-color:var(--line);
-}
-html.tema-escuro .denuncia-admin-card{
-  background:var(--paper-card); border-color:var(--line); box-shadow:0 5px 0 rgba(0,0,0,0.7);
-}
-html.tema-escuro .denuncia-admin-foto{
-  background:var(--paper); border-color:var(--line);
-}
-html.tema-escuro .filtro-btn{
-  background:var(--paper-card); border-color:var(--line); color:var(--ink);
-}
-html.tema-escuro .filtro-btn:hover{
-  background:#24332B; border-color:var(--folha);
-}
-html.tema-escuro .filtro-btn.ativo{
-  background:var(--folha); color:#fff; border-color:var(--folha-deep);
-}
-html.tema-escuro .status-pill.pendente{
-  background:#FFB199; color:#111814; border-color:var(--line);
-}
-html.tema-escuro .status-pill.resolvida{
-  background:var(--folha); color:#fff; border-color:var(--folha-deep);
-}
-html.tema-escuro .btn-secundario{
-  background:var(--paper); color:var(--ink); border-color:var(--line);
-}
-html.tema-escuro .btn-secundario:hover{
-  background:#24332B;
-}
-html.tema-escuro .btn-perigo{
-  background:transparent; color:#FF7B8E; border-color:#FF7B8E;
-}
-html.tema-escuro .btn-perigo:hover{
-  background:#FF7B8E; color:#111814;
+/* ---------- MENU SUPERIOR (.site-nav no admin) ---------- */
+.admin-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 
+.admin-voltar {
+  color: #0F3D33;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  font-family: var(--body);
+  transition: color 0.15s ease, transform 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.admin-voltar:hover {
+  color: var(--folha-deep);
+  transform: translateX(-2px);
+  text-decoration: underline;
+}
+
+.admin-user-info {
+  color: #1B4D41;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(43, 182, 115, 0.12);
+  border: 1px solid rgba(43, 182, 115, 0.3);
+  padding: 4px 10px;
+  border-radius: 14px;
+}
+
+.admin-btn-logout {
+  background: rgba(255, 255, 255, 0.85);
+  color: #0F3D33;
+  border: 1.5px solid rgba(43, 182, 115, 0.45);
+  padding: 8px 16px;
+  min-height: 40px;
+  border-radius: 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--body);
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 8px rgba(15, 61, 51, 0.05);
+}
+.admin-btn-logout:hover {
+  background: var(--coral);
+  border-color: var(--coral-deep);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(255, 93, 115, 0.3);
+}
+
+/* ---------- LOGIN (Estilo Vidro) ---------- */
+.admin-login {
+  display: flex;
+  justify-content: center;
+  padding-top: 40px;
+}
+
+.admin-login-card {
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(43, 182, 115, 0.35);
+  border-radius: 18px;
+  box-shadow: 0 16px 36px rgba(15, 61, 51, 0.08), 0 2px 6px rgba(46, 156, 202, 0.08);
+  padding: 36px;
+  max-width: 440px;
+  width: 100%;
+  color: #0F3D33;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.admin-login-card:hover {
+  box-shadow: 0 20px 42px rgba(15, 61, 51, 0.12), 0 0 16px rgba(43, 182, 115, 0.16);
+}
+
+.admin-login-card h1 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.7rem;
+  margin: 0 0 10px;
+  color: #0F3D33;
+}
+.admin-login-card p {
+  color: #1B4D41;
+  margin: 0 0 20px;
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+
+#form-login {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#email-input, #senha-input {
+  padding: 13px 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1.5px solid rgba(43, 182, 115, 0.35);
+  border-radius: 14px;
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 0.96rem;
+  width: 100%;
+  box-sizing: border-box;
+  color: #0F3D33;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+#email-input:focus, #senha-input:focus {
+  border-color: var(--folha);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(43, 182, 115, 0.35), 0 0 14px rgba(43, 182, 115, 0.2);
+}
+
+#btn-entrar {
+  min-height: 46px;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+#btn-entrar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 201, 60, 0.4), 0 0 14px rgba(255, 201, 60, 0.3);
+}
+
+.admin-login-erro {
+  color: var(--coral-deep);
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin: 14px 0 0;
+  background: #FFF1F1;
+  border: 1px solid var(--coral);
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+
+.admin-login-nota {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(43, 182, 115, 0.2);
+  font-size: 0.78rem;
+  color: #1B4D41;
+  font-family: var(--mono);
+}
+
+/* ---------- CABEÇALHO DO PAINEL E RESUMO ---------- */
+.admin-head {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+.admin-head h1 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 2.1rem;
+  margin: 0 0 6px;
+  color: #0F3D33;
+  letter-spacing: -0.01em;
+}
+.admin-head p {
+  color: #1B4D41;
+  margin: 0;
+  font-size: 0.98rem;
+  max-width: 60ch;
+}
+
+/* Pílulas de métricas no resumo */
+.admin-resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-family: var(--mono);
+}
+
+.admin-resumo span {
+  flex: 1 1 160px;
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(43, 182, 115, 0.35);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 14px rgba(15, 61, 51, 0.05);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1B4D41;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.admin-resumo span:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 61, 51, 0.09), 0 0 12px rgba(43, 182, 115, 0.15);
+  border-color: rgba(43, 182, 115, 0.55);
+}
+
+.admin-resumo strong {
+  font-size: 1.7rem;
+  font-family: var(--mono);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* Cores das métricas */
+.admin-resumo .metrica-total strong {
+  color: #0F3D33;
+}
+.admin-resumo .metrica-pendente strong {
+  color: var(--coral);
+}
+.admin-resumo .metrica-critica strong {
+  color: #E13E56;
+}
+.admin-resumo .metrica-resolvida strong {
+  color: var(--folha);
+}
+.admin-resumo .metrica-tempo-medio strong {
+  color: var(--ceu);
+  font-size: 1.35rem;
+}
+
+/* ---------- FILTROS, ORDENAÇÃO E BOTÕES ---------- */
+.admin-acoes-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.admin-filtros-wrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-filtros {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(43, 182, 115, 0.35);
+  border-radius: 18px;
+  padding: 3px;
+  gap: 4px;
+  box-shadow: 0 4px 14px rgba(15, 61, 51, 0.05);
+}
+
+.filtro-btn {
+  background: transparent;
+  border: none;
+  color: #1B4D41;
+  border-radius: 15px;
+  padding: 8px 16px;
+  min-height: 44px;
+  font-weight: 700;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.filtro-btn:hover {
+  color: #0F3D33;
+  transform: translateY(-2px);
+}
+.filtro-btn.ativo {
+  background: linear-gradient(135deg, #1F8F58 0%, #2E9CCA 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(43, 182, 115, 0.35);
+}
+
+/* Seletor de ordenação */
+.admin-ordenacao-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(43, 182, 115, 0.35);
+  border-radius: 18px;
+  padding: 3px 12px 3px 14px;
+  min-height: 44px;
+  box-shadow: 0 4px 14px rgba(15, 61, 51, 0.05);
+}
+
+.admin-ordenacao-label {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1B4D41;
+  white-space: nowrap;
+}
+
+.admin-select-ordenacao {
+  background: transparent;
+  border: none;
+  color: #0F3D33;
+  font-family: var(--body);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  padding: 6px 4px;
+  min-height: 40px;
+}
+.admin-select-ordenacao:focus {
+  outline: none;
+}
+
+/* Botão CSV */
+.btn-csv {
+  background: rgba(255, 255, 255, 0.9);
+  color: #0F3D33;
+  border: 1.5px solid rgba(43, 182, 115, 0.35);
+  border-radius: 16px;
+  padding: 10px 18px;
+  min-height: 44px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(15, 61, 51, 0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.btn-csv:hover {
+  transform: translateY(-2px);
+  border-color: var(--folha);
+  box-shadow: 0 6px 18px rgba(43, 182, 115, 0.2);
+}
+
+.admin-paginacao {
+  display: flex;
+  justify-content: center;
+  padding-top: 28px;
+}
+
+/* ---------- CARTÕES DE DENÚNCIA (Estilo Vidro + Urgência) ---------- */
+#admin-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.denuncia-admin-card {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(43, 182, 115, 0.35);
+  border-left: 6px solid #2E9CCA; /* cor base de urgência */
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(15, 61, 51, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  animation: surgir-card-admin 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+/* Entrada escalonada */
+.denuncia-admin-card:nth-child(1) { animation-delay: 0.03s; }
+.denuncia-admin-card:nth-child(2) { animation-delay: 0.06s; }
+.denuncia-admin-card:nth-child(3) { animation-delay: 0.09s; }
+.denuncia-admin-card:nth-child(4) { animation-delay: 0.12s; }
+.denuncia-admin-card:nth-child(5) { animation-delay: 0.15s; }
+.denuncia-admin-card:nth-child(n+6) { animation-delay: 0.18s; }
+
+@keyframes surgir-card-admin {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.denuncia-admin-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(15, 61, 51, 0.10), 0 0 16px rgba(43, 182, 115, 0.16);
+  border-color: rgba(43, 182, 115, 0.55);
+}
+
+/* Níveis de Urgência — Borda Esquerda */
+.denuncia-admin-card.urgencia-critico {
+  border-left-color: #E13E56;
+}
+.denuncia-admin-card.urgencia-urgente {
+  border-left-color: #FF8C42;
+}
+.denuncia-admin-card.urgencia-atencao {
+  border-left-color: #FFC93C;
+}
+.denuncia-admin-card.urgencia-novo {
+  border-left-color: #2E9CCA;
+}
+.denuncia-admin-card.urgencia-resolvida,
+.denuncia-admin-card.resolvida {
+  border-left-color: var(--folha);
+  opacity: 0.88;
+}
+
+/* Foto com cantos arredondados e zoom suave no hover */
+.denuncia-admin-foto {
+  width: 140px;
+  height: 140px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(244, 250, 247, 0.9);
+  border: 1px solid rgba(43, 182, 115, 0.25);
+}
+.denuncia-admin-foto img,
+.antes-depois-foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+.denuncia-admin-foto:hover img,
+.antes-depois-item:hover .antes-depois-foto {
+  transform: scale(1.05);
+}
+
+.denuncia-admin-foto .sem-foto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  text-align: center;
+  padding: 8px;
+}
+
+/* Topo do cartão e Badges */
+.denuncia-admin-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.denuncia-admin-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.denuncia-admin-metas {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Status Pill */
+.status-pill {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(31, 42, 36, 0.15);
+}
+.status-pill.pendente {
+  background: var(--sol);
+  color: #1F2A24;
+}
+.status-pill.resolvida {
+  background: var(--folha);
+  color: #ffffff;
+  border-color: var(--folha-deep);
+}
+
+/* Badges de Urgência */
+.urgencia-badge {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.urgencia-badge.urgencia-critico {
+  background: #FFE4E8;
+  color: #B01E35;
+  border: 1px solid #E13E56;
+  animation: pulso-urgencia 2s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes pulso-urgencia {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.urgencia-badge.urgencia-urgente {
+  background: #FFF0E6;
+  color: #C05615;
+  border: 1px solid #FF8C42;
+}
+.urgencia-badge.urgencia-atencao {
+  background: #FFF9E6;
+  color: #8C6400;
+  border: 1px solid #FFC93C;
+}
+.urgencia-badge.urgencia-novo {
+  background: #EBF8FF;
+  color: #1E6F94;
+  border: 1px solid #2E9CCA;
+}
+
+/* Badge de Apoios */
+.apoios-badge {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(43, 182, 115, 0.12);
+  color: #0F3D33;
+  border: 1px solid rgba(43, 182, 115, 0.35);
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+/* Tempo Pendente Dinâmico */
+.tempo-pendente-dinamico {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #B01E35;
+  background: #FFF1F1;
+  border: 1px solid rgba(225, 62, 86, 0.3);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+/* Tempo de Resolução Badge */
+.tempo-resolucao-badge {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #1D6B34;
+  background: #DEF7E4;
+  border: 1px solid #22C55E;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.resolvido-origem-badge {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+.resolvido-origem-badge.autor { color: #1D6B34; }
+.resolvido-origem-badge.admin { color: #1E6F94; }
+
+.denuncia-admin-data {
+  font-size: 0.76rem;
+  color: #1B4D41;
+  font-family: var(--mono);
+}
+
+.denuncia-admin-desc {
+  margin: 0 0 10px;
+  font-size: 0.96rem;
+  color: #0F3D33;
+  line-height: 1.5;
+}
+
+.denuncia-admin-coord {
+  margin: 0 0 14px;
+  font-size: 0.8rem;
+  color: #1B4D41;
+  font-family: var(--mono);
+}
+
+/* ---------- BOTÕES DE AÇÃO DO CARTÃO ---------- */
+.denuncia-admin-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(43, 182, 115, 0.2);
+}
+
+/* "Marcar como resolvida" — Degradê Coral */
+.btn-coral.btn-toggle-status {
+  background: linear-gradient(135deg, #FF5D73 0%, #E13E56 100%);
+  color: #ffffff;
+  border: 1.5px solid var(--coral-deep);
+  border-radius: 16px;
+  padding: 10px 20px;
+  min-height: 44px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  box-shadow: 0 4px 14px rgba(255, 93, 115, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-coral.btn-toggle-status:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 93, 115, 0.45);
+}
+
+/* "Reabrir" — Estilo Vidro */
+.btn-secundario.btn-toggle-status {
+  background: rgba(255, 255, 255, 0.9);
+  color: #0F3D33;
+  border: 1.5px solid rgba(43, 182, 115, 0.4);
+  border-radius: 16px;
+  padding: 10px 20px;
+  min-height: 44px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(15, 61, 51, 0.05);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.btn-secundario.btn-toggle-status:hover {
+  transform: translateY(-2px);
+  border-color: var(--folha);
+  box-shadow: 0 6px 18px rgba(43, 182, 115, 0.2);
+}
+
+/* "Apagar" — Contorno vermelho com hover preenchido */
+.btn-perigo {
+  background: transparent;
+  color: var(--coral-deep);
+  border: 1.5px solid var(--coral-deep);
+  border-radius: 16px;
+  padding: 10px 18px;
+  min-height: 44px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-perigo:hover {
+  background: var(--coral-deep);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(225, 62, 86, 0.35);
+}
+
+.btn-toggle-status:disabled,
+.btn-perigo:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none !important;
+}
+
+/* Botão Carregar Mais */
+#btn-carregar-mais {
+  min-height: 44px;
+  border-radius: 16px;
+  padding: 12px 24px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid rgba(43, 182, 115, 0.35);
+  color: #0F3D33;
+  box-shadow: 0 4px 14px rgba(15, 61, 51, 0.06);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+#btn-carregar-mais:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(43, 182, 115, 0.2);
+}
+
+/* ---------- RESPONSIVIDADE ---------- */
+@media (max-width: 680px) {
+  .denuncia-admin-card {
+    grid-template-columns: 1fr;
+  }
+  .denuncia-admin-foto {
+    width: 100%;
+    height: 180px;
+  }
+  .denuncia-admin-acoes {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .denuncia-admin-acoes button {
+    width: 100%;
+    justify-content: center;
+  }
+  .admin-filtros-wrap {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-filtros {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .admin-ordenacao-box {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: space-between;
+  }
+  .admin-resumo span {
+    flex: 1 1 100%;
+  }
+}
+
+/* ---------- ACESSIBILIDADE: REDUCED MOTION ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .admin-body::after,
+  .denuncia-admin-card,
+  .urgencia-badge.urgencia-critico,
+  .denuncia-admin-foto img,
+  .antes-depois-foto {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* ===========================================================
+   MODO ESCURO NO ADMIN (html.tema-escuro)
+   =========================================================== */
+html.tema-escuro .admin-body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+html.tema-escuro .admin-body::before {
+  opacity: 0.2;
+}
+
+html.tema-escuro .admin-voltar {
+  color: var(--ink);
+}
+html.tema-escuro .admin-user-info {
+  background: rgba(43, 182, 115, 0.15);
+  border-color: var(--line);
+  color: #38D98C;
+}
+html.tema-escuro .admin-btn-logout {
+  background: var(--paper-card);
+  border-color: var(--line);
+  color: var(--ink);
+}
+html.tema-escuro .admin-btn-logout:hover {
+  background: var(--coral-deep);
+  border-color: var(--coral-deep);
+  color: #ffffff;
+}
+
+html.tema-escuro .admin-login-card {
+  background: var(--paper-card);
+  border-color: var(--line);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+  color: var(--ink);
+}
+html.tema-escuro .admin-login-card h1 {
+  color: var(--ink);
+}
+html.tema-escuro .admin-login-card p {
+  color: var(--ink-soft);
+}
+html.tema-escuro #email-input,
+html.tema-escuro #senha-input {
+  background: var(--paper);
+  color: var(--ink);
+  border-color: var(--line);
+}
+html.tema-escuro #email-input:focus,
+html.tema-escuro #senha-input:focus {
+  border-color: var(--sol);
+  box-shadow: 0 0 0 3px rgba(255, 201, 60, 0.35);
+}
+
+html.tema-escuro .admin-head h1 {
+  color: var(--ink);
+}
+html.tema-escuro .admin-head p {
+  color: var(--ink-soft);
+}
+
+html.tema-escuro .admin-resumo span {
+  background: var(--paper-card);
+  border-color: var(--line);
+  color: var(--ink-soft);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+}
+html.tema-escuro .admin-resumo .metrica-total strong {
+  color: var(--ink);
+}
+html.tema-escuro .admin-resumo .metrica-pendente strong {
+  color: #FFC93C;
+}
+html.tema-escuro .admin-resumo .metrica-critica strong {
+  color: #FF7B8E;
+}
+html.tema-escuro .admin-resumo .metrica-resolvida strong {
+  color: #4ADE80;
+}
+html.tema-escuro .admin-resumo .metrica-tempo-medio strong {
+  color: #7EC1F2;
+}
+
+html.tema-escuro .admin-filtros,
+html.tema-escuro .admin-ordenacao-box,
+html.tema-escuro .btn-csv,
+html.tema-escuro #btn-carregar-mais {
+  background: var(--paper-card);
+  border-color: var(--line);
+  color: var(--ink);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+html.tema-escuro .admin-ordenacao-label {
+  color: var(--ink-soft);
+}
+html.tema-escuro .admin-select-ordenacao {
+  color: var(--ink);
+}
+html.tema-escuro .admin-select-ordenacao option {
+  background: #1A241F;
+  color: #F0F5F2;
+}
+html.tema-escuro .filtro-btn {
+  color: var(--ink-soft);
+}
+html.tema-escuro .filtro-btn:hover {
+  color: var(--ink);
+}
+html.tema-escuro .filtro-btn.ativo {
+  background: var(--folha);
+  color: #ffffff;
+}
+
+html.tema-escuro .denuncia-admin-card {
+  background: var(--paper-card);
+  border-color: var(--line);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  color: var(--ink);
+}
+html.tema-escuro .denuncia-admin-desc {
+  color: var(--ink);
+}
+html.tema-escuro .denuncia-admin-coord,
+html.tema-escuro .denuncia-admin-data {
+  color: var(--ink-soft);
+}
+html.tema-escuro .denuncia-admin-foto {
+  background: var(--paper);
+  border-color: var(--line);
+}
+html.tema-escuro .apoios-badge {
+  background: rgba(43, 182, 115, 0.15);
+  color: #38D98C;
+  border-color: var(--line);
+}
+html.tema-escuro .tempo-pendente-dinamico {
+  background: #3A171C;
+  color: #FCA5A5;
+  border-color: #EF4444;
+}
+
+html.tema-escuro .urgencia-badge.urgencia-critico {
+  background: #3A171C;
+  color: #FCA5A5;
+  border-color: #EF4444;
+}
+html.tema-escuro .urgencia-badge.urgencia-urgente {
+  background: #331F14;
+  color: #FDBA74;
+  border-color: #FF8C42;
+}
+html.tema-escuro .urgencia-badge.urgencia-atencao {
+  background: #2E250A;
+  color: #FDE047;
+  border-color: #EAB308;
+}
+html.tema-escuro .urgencia-badge.urgencia-novo {
+  background: #142833;
+  color: #7DD3FC;
+  border-color: #2E9CCA;
+}
+
+html.tema-escuro .btn-secundario.btn-toggle-status {
+  background: var(--paper);
+  color: var(--ink);
+  border-color: var(--line);
+}
+html.tema-escuro .btn-secundario.btn-toggle-status:hover {
+  background: #24332B;
+}
+
+html.tema-escuro .btn-perigo {
+  color: #FF7B8E;
+  border-color: #FF7B8E;
+}
+html.tema-escuro .btn-perigo:hover {
+  background: #FF7B8E;
+  color: #111814;
+}

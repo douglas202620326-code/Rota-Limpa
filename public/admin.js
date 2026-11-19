@@ -106,13 +106,17 @@ const listaEl = document.getElementById('admin-lista');
 const resumoTotal = document.getElementById('resumo-total');
 const resumoPendentes = document.getElementById('resumo-pendentes');
 const resumoResolvidas = document.getElementById('resumo-resolvidas');
+const resumoCriticas = document.getElementById('resumo-criticas');
+const resumoTempoMedio = document.getElementById('resumo-tempo-medio');
 const filtrosEl = document.getElementById('admin-filtros');
+const ordenacaoEl = document.getElementById('admin-ordenacao');
 const btnExportarCsv = document.getElementById('btn-exportar-csv');
 const btnCarregarMais = document.getElementById('btn-carregar-mais');
 const adminPaginacaoEl = document.getElementById('admin-paginacao');
 
 let denunciasCache = []; // [{id, ...dados}]
 let filtroAtivo = 'todas';
+let ordenacaoAtiva = 'recentes';
 
 const LIMITE_PAGINA = 50;
 let ultimoDocSnapshot = null;
@@ -180,12 +184,142 @@ async function carregarDenuncias(carregarMais = false) {
   }
 }
 
+function calcularTempoPendenteTexto(dataEnvio) {
+  if (!dataEnvio) return '—';
+  try {
+    const data = typeof dataEnvio.toDate === 'function'
+      ? dataEnvio.toDate()
+      : (dataEnvio instanceof Date ? dataEnvio : new Date(dataEnvio));
+    if (!(data instanceof Date) || isNaN(data.getTime())) return '—';
+
+    const diffMs = Math.max(0, Date.now() - data.getTime());
+    const minutos = Math.floor(diffMs / 60000);
+    const horas = Math.floor(diffMs / 3600000);
+    const dias = Math.floor(diffMs / 86400000);
+
+    if (minutos < 1) return '⏳ Pendente há menos de 1 min';
+    if (minutos < 60) return `⏳ Pendente há ${minutos} min`;
+    if (dias < 1) {
+      const restoMin = minutos % 60;
+      return restoMin > 0
+        ? `⏳ Pendente há ${horas} h e ${restoMin} min`
+        : `⏳ Pendente há ${horas} h`;
+    }
+    const restoHoras = horas % 24;
+    const strDias = dias === 1 ? '1 dia' : `${dias} dias`;
+    return restoHoras > 0
+      ? `⏳ Pendente há ${strDias} e ${restoHoras} h`
+      : `⏳ Pendente há ${strDias}`;
+  } catch (e) {
+    return '—';
+  }
+}
+
+function calcularNivelUrgencia(d) {
+  if (d.status === 'resolvida') {
+    return { chave: 'resolvida', nivel: 0, rotulo: 'Resolvida', classe: 'urgencia-resolvida', cor: 'var(--folha)' };
+  }
+  let diffDias = 0;
+  if (d.dataEnvio) {
+    try {
+      const data = typeof d.dataEnvio.toDate === 'function' ? d.dataEnvio.toDate() : new Date(d.dataEnvio);
+      if (data instanceof Date && !isNaN(data.getTime())) {
+        diffDias = Math.max(0, (Date.now() - data.getTime()) / 86400000);
+      }
+    } catch (e) {}
+  }
+  const apoios = Array.isArray(d.apoios) ? d.apoios.length : 0;
+
+  if (diffDias >= 7 || apoios >= 3) {
+    return { chave: 'critico', nivel: 4, rotulo: '🚨 Crítico', classe: 'urgencia-critico', cor: '#E13E56' };
+  }
+  if (diffDias >= 3) {
+    return { chave: 'urgente', nivel: 3, rotulo: '⚡ Urgente', classe: 'urgencia-urgente', cor: '#FF8C42' };
+  }
+  if (diffDias >= 1) {
+    return { chave: 'atencao', nivel: 2, rotulo: '⚠️ Atenção', classe: 'urgencia-atencao', cor: '#FFC93C' };
+  }
+  return { chave: 'novo', nivel: 1, rotulo: '🌱 Novo', classe: 'urgencia-novo', cor: '#2E9CCA' };
+}
+
+function calcularTempoResolucaoTexto(d) {
+  if (!d.dataEnvio || !d.dataResolucao) return '';
+  try {
+    const ini = typeof d.dataEnvio.toDate === 'function' ? d.dataEnvio.toDate() : new Date(d.dataEnvio);
+    const fim = typeof d.dataResolucao.toDate === 'function' ? d.dataResolucao.toDate() : new Date(d.dataResolucao);
+    if (!(ini instanceof Date) || !(fim instanceof Date) || isNaN(ini.getTime()) || isNaN(fim.getTime())) return '';
+
+    const diffMs = Math.max(0, fim.getTime() - ini.getTime());
+    const minutos = Math.floor(diffMs / 60000);
+    const horas = Math.floor(diffMs / 3600000);
+    const dias = Math.floor(diffMs / 86400000);
+
+    if (minutos < 1) return '✅ Resolvida em menos de 1 min';
+    if (minutos < 60) return `✅ Resolvida em ${minutos} min`;
+    if (dias < 1) {
+      const restoMin = minutos % 60;
+      return restoMin > 0
+        ? `✅ Resolvida em ${horas} h e ${restoMin} min`
+        : `✅ Resolvida em ${horas} h`;
+    }
+    const restoHoras = horas % 24;
+    const strDias = dias === 1 ? '1 dia' : `${dias} dias`;
+    return restoHoras > 0
+      ? `✅ Resolvida em ${strDias} e ${restoHoras} h`
+      : `✅ Resolvida em ${strDias}`;
+  } catch (e) {
+    return '';
+  }
+}
+
 function atualizarResumo() {
   const total = denunciasCache.length;
-  const resolvidas = denunciasCache.filter(d => d.status === 'resolvida').length;
-  resumoTotal.textContent = total;
-  resumoResolvidas.textContent = resolvidas;
-  resumoPendentes.textContent = total - resolvidas;
+  const resolvidas = denunciasCache.filter(d => d.status === 'resolvida');
+  const pendentes = denunciasCache.filter(d => d.status !== 'resolvida');
+  const criticas = pendentes.filter(d => calcularNivelUrgencia(d).chave === 'critico').length;
+
+  if (resumoTotal) resumoTotal.textContent = total;
+  if (resumoResolvidas) resumoResolvidas.textContent = resolvidas.length;
+  if (resumoPendentes) resumoPendentes.textContent = pendentes.length;
+  if (resumoCriticas) resumoCriticas.textContent = criticas;
+
+  if (resumoTempoMedio) {
+    const comTempo = resolvidas.filter(d => d.dataEnvio && d.dataResolucao);
+    if (comTempo.length > 0) {
+      let somaMs = 0;
+      let contagemValida = 0;
+      comTempo.forEach(d => {
+        try {
+          const ini = typeof d.dataEnvio.toDate === 'function' ? d.dataEnvio.toDate() : new Date(d.dataEnvio);
+          const fim = typeof d.dataResolucao.toDate === 'function' ? d.dataResolucao.toDate() : new Date(d.dataResolucao);
+          if (ini instanceof Date && fim instanceof Date && !isNaN(ini.getTime()) && !isNaN(fim.getTime())) {
+            somaMs += Math.max(0, fim.getTime() - ini.getTime());
+            contagemValida++;
+          }
+        } catch (e) {}
+      });
+
+      if (contagemValida > 0) {
+        const mediaMs = somaMs / contagemValida;
+        const mediaHoras = Math.floor(mediaMs / 3600000);
+        const mediaDias = Math.floor(mediaMs / 86400000);
+        if (mediaDias >= 1) {
+          const restoH = mediaHoras % 24;
+          resumoTempoMedio.textContent = restoH > 0 ? `${mediaDias} d e ${restoH} h` : (mediaDias === 1 ? '1 dia' : `${mediaDias} dias`);
+        } else if (mediaHoras >= 1) {
+          const restoM = Math.floor((mediaMs % 3600000) / 60000);
+          resumoTempoMedio.textContent = restoM > 0 ? `${mediaHoras} h e ${restoM} min` : `${mediaHoras} h`;
+        } else {
+          const m = Math.max(1, Math.floor(mediaMs / 60000));
+          resumoTempoMedio.textContent = `${m} min`;
+        }
+      } else {
+        resumoTempoMedio.textContent = '—';
+      }
+    } else {
+      resumoTempoMedio.textContent = '—';
+    }
+  }
 }
 
 function escapeHtml(texto) {
@@ -230,6 +364,37 @@ function renderLista() {
     return;
   }
 
+  // Ordenação respeitando filtro ativo
+  filtradas.sort((a, b) => {
+    const timeA = a.dataEnvio && typeof a.dataEnvio.toDate === 'function'
+      ? a.dataEnvio.toDate().getTime()
+      : (a.dataEnvio ? new Date(a.dataEnvio).getTime() : 0);
+    const timeB = b.dataEnvio && typeof b.dataEnvio.toDate === 'function'
+      ? b.dataEnvio.toDate().getTime()
+      : (b.dataEnvio ? new Date(b.dataEnvio).getTime() : 0);
+    const apoiosA = Array.isArray(a.apoios) ? a.apoios.length : 0;
+    const apoiosB = Array.isArray(b.apoios) ? b.apoios.length : 0;
+
+    if (ordenacaoAtiva === 'antigas') {
+      return timeA - timeB;
+    }
+    if (ordenacaoAtiva === 'apoiadas') {
+      if (apoiosB !== apoiosA) return apoiosB - apoiosA;
+      return timeB - timeA;
+    }
+    if (ordenacaoAtiva === 'urgentes') {
+      if (a.status === 'resolvida' && b.status !== 'resolvida') return 1;
+      if (a.status !== 'resolvida' && b.status === 'resolvida') return -1;
+      const urgA = calcularNivelUrgencia(a).nivel || 0;
+      const urgB = calcularNivelUrgencia(b).nivel || 0;
+      if (urgB !== urgA) return urgB - urgA;
+      if (apoiosB !== apoiosA) return apoiosB - apoiosA;
+      return timeA - timeB;
+    }
+    // padrão: mais recentes
+    return timeB - timeA;
+  });
+
   listaEl.innerHTML = filtradas.map(d => {
     const resolvida = d.status === 'resolvida';
     const fotoSegura = sanitizeUrl(d.foto);
@@ -240,13 +405,18 @@ function renderLista() {
     const obsResolucaoSegura = escapeHtml(d.observacaoResolucao ? d.observacaoResolucao : '');
     const latStr = typeof d.latitude === 'number' ? d.latitude.toFixed(5) : '—';
     const lngStr = typeof d.longitude === 'number' ? d.longitude.toFixed(5) : '—';
+    const totalApoios = Array.isArray(d.apoios) ? d.apoios.length : 0;
+
+    const urg = calcularNivelUrgencia(d);
+    const tempoPendente = calcularTempoPendenteTexto(d.dataEnvio);
+    const tempoResolucao = calcularTempoResolucaoTexto(d);
 
     let resolvidoBadge = '';
     if (resolvida) {
       if (d.resolvidoPor === 'autor') {
-        resolvidoBadge = '<span style="font-size:0.75rem; color:#1D6B34; font-weight:700; margin-left:6px;">(pelo autor)</span>';
+        resolvidoBadge = '<span class="resolvido-origem-badge autor">(pelo autor)</span>';
       } else if (d.resolvidoPor === 'admin') {
-        resolvidoBadge = '<span style="font-size:0.75rem; color:#1A5276; font-weight:700; margin-left:6px;">(pela Emlurb)</span>';
+        resolvidoBadge = '<span class="resolvido-origem-badge admin">(pela Emlurb)</span>';
       }
     }
 
@@ -270,7 +440,7 @@ function renderLista() {
     }
 
     return `
-      <div class="denuncia-admin-card ${resolvida ? 'resolvida' : ''}" data-id="${idSeguro}">
+      <div class="denuncia-admin-card ${resolvida ? 'resolvida' : ''} ${urg.classe}" data-id="${idSeguro}">
         ${!fotoResolvidaSegura ? `
           <div class="denuncia-admin-foto">
             ${fotoSegura ? `<img src="${fotoSegura}" alt="Foto da denúncia">` : '<div class="sem-foto">Sem foto</div>'}
@@ -278,11 +448,17 @@ function renderLista() {
         ` : ''}
         <div class="denuncia-admin-corpo" ${fotoResolvidaSegura ? 'style="grid-column: 1 / -1;"' : ''}>
           <div class="denuncia-admin-topo">
-            <div>
+            <div class="denuncia-admin-tags">
               <span class="status-pill ${resolvida ? 'resolvida' : 'pendente'}">${resolvida ? 'Resolvida' : 'Pendente'}</span>
+              ${!resolvida ? `<span class="urgencia-badge ${urg.classe}">${escapeHtml(urg.rotulo)}</span>` : ''}
+              ${!resolvida ? `<span class="apoios-badge">👍 ${totalApoios} ${totalApoios === 1 ? 'apoio' : 'apoios'}</span>` : ''}
               ${resolvidoBadge}
+              ${resolvida && tempoResolucao ? `<span class="tempo-resolucao-badge">${escapeHtml(tempoResolucao)}</span>` : ''}
             </div>
-            <span class="denuncia-admin-data">${escapeHtml(formatarData(d.dataEnvio))}</span>
+            <div class="denuncia-admin-metas">
+              ${!resolvida ? `<span class="tempo-pendente-dinamico" data-id="${idSeguro}">${escapeHtml(tempoPendente)}</span>` : ''}
+              <span class="denuncia-admin-data">${escapeHtml(formatarData(d.dataEnvio))}</span>
+            </div>
           </div>
           <p class="denuncia-admin-desc">${descSegura}</p>
           ${comparativoHtml}
@@ -311,6 +487,24 @@ filtrosEl.addEventListener('click', (e) => {
   renderLista();
 });
 
+if (ordenacaoEl) {
+  ordenacaoEl.addEventListener('change', (e) => {
+    ordenacaoAtiva = e.target.value;
+    renderLista();
+  });
+}
+
+// Atualização periódica do tempo pendente a cada 60s
+setInterval(() => {
+  document.querySelectorAll('.tempo-pendente-dinamico').forEach(el => {
+    const id = el.dataset.id;
+    const d = denunciasCache.find(item => item.id === id);
+    if (d && d.status !== 'resolvida') {
+      el.textContent = calcularTempoPendenteTexto(d.dataEnvio);
+    }
+  });
+}, 60000);
+
 if (btnCarregarMais) {
   btnCarregarMais.addEventListener('click', () => carregarDenuncias(true));
 }
@@ -326,7 +520,22 @@ function exportarDenunciasParaCsv() {
     return;
   }
 
-  const cabecalho = ['ID', 'Status', 'Resolvido Por', 'Autor', 'Data e Hora', 'Latitude', 'Longitude', 'Descrição', 'URL Foto Inicial', 'URL Foto Limpeza', 'Observação Resolução'];
+  const cabecalho = [
+    'ID',
+    'Status',
+    'Nível de Urgência',
+    'Tempo Pendente (h)',
+    'Apoios',
+    'Resolvido Por',
+    'Autor',
+    'Data e Hora Envio',
+    'Latitude',
+    'Longitude',
+    'Descrição',
+    'URL Foto Inicial',
+    'URL Foto Limpeza',
+    'Observação Resolução'
+  ];
   const linhas = filtradas.map(d => {
     const dataFormatada = formatarData(d.dataEnvio);
     const descLimpa = (d.descricao || '').replace(/"/g, '""');
@@ -337,10 +546,28 @@ function exportarDenunciasParaCsv() {
     const obsLimpa = (d.observacaoResolucao || '').replace(/"/g, '""');
     const lat = typeof d.latitude === 'number' ? d.latitude : '';
     const lng = typeof d.longitude === 'number' ? d.longitude : '';
+    const apoiosQtd = Array.isArray(d.apoios) ? d.apoios.length : 0;
+
+    const urgObj = calcularNivelUrgencia(d);
+    const nivelUrgencia = urgObj.rotulo ? urgObj.rotulo.replace(/^[^\w\s]+/, '').trim() : (d.status === 'resolvida' ? 'Resolvida' : 'Pendente');
+
+    let tempoPendenteHoras = '—';
+    if (d.status !== 'resolvida' && d.dataEnvio) {
+      try {
+        const dataE = typeof d.dataEnvio.toDate === 'function' ? d.dataEnvio.toDate() : new Date(d.dataEnvio);
+        if (dataE instanceof Date && !isNaN(dataE.getTime())) {
+          const h = Math.max(0, (Date.now() - dataE.getTime()) / 3600000);
+          tempoPendenteHoras = h.toFixed(1);
+        }
+      } catch (e) {}
+    }
 
     return [
       `"${d.id}"`,
       `"${d.status || 'pendente'}"`,
+      `"${nivelUrgencia}"`,
+      `"${tempoPendenteHoras}"`,
+      `"${apoiosQtd}"`,
       `"${resolvidoPorLimpo}"`,
       `"${autorLimpo}"`,
       `"${dataFormatada}"`,
@@ -382,14 +609,21 @@ listaEl.addEventListener('click', async (e) => {
     btnToggle.textContent = 'Salvando...';
 
     try {
-      await db.collection('denuncias').doc(id).update({
+      const updateData = {
         status: novoStatus,
         resolvidoPor: novoResolvidoPor
-      });
+      };
+      if (novoStatus === 'resolvida') {
+        updateData.dataResolucao = firebase.firestore.FieldValue.serverTimestamp();
+      }
+      await db.collection('denuncias').doc(id).update(updateData);
       const item = denunciasCache.find(d => d.id === id);
       if (item) {
         item.status = novoStatus;
         item.resolvidoPor = novoResolvidoPor;
+        if (novoStatus === 'resolvida') {
+          item.dataResolucao = { toDate: () => new Date() };
+        }
       }
       atualizarResumo();
       renderLista();

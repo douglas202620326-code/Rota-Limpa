@@ -1,0 +1,137 @@
+[
+  {
+    "id": "demo-1",
+    "latitude": -8.1182,
+    "longitude": -34.9015,
+    "descricao": "Entulho e poda de árvores acumulados na calçada da Rua dos Navegantes.",
+    "status": "pendente",
+    "apoios": ["user_bv_1", "user_bv_2", "user_bv_3", "user_bv_4"],
+    "dataEnvio": "2026-11-18T14:30:00.000Z"
+  },
+  {
+    "id": "demo-2",
+    "latitude": -8.0245,
+    "longitude": -34.9150,
+    "descricao": "Lixo doméstico espalhado próximo ao Largo de Casa Amarela.",
+    "status": "pendente",
+    "apoios": ["user_ca_1", "user_ca_2", "user_ca_3", "user_ca_4", "user_ca_5"],
+    "dataEnvio": "2026-11-04T18:15:00.000Z"
+  },
+  {
+    "id": "demo-3",
+    "latitude": -8.0465,
+    "longitude": -34.9535,
+    "descricao": "Descarte irregular de móveis velhos e colchões na Rua General Polidoro.",
+    "status": "pendente",
+    "apoios": ["user_ufpe_1", "user_ufpe_2"],
+    "dataEnvio": "2026-11-12T13:40:00.000Z"
+  },
+  {
+    "id": "demo-4",
+    "latitude": -8.1055,
+    "longitude": -34.9090,
+    "descricao": "Ponto de lixo crônico na calçada da Avenida General Mac Arthur.",
+    "status": "pendente",
+    "apoios": ["user_imb_1", "user_imb_2", "user_imb_3", "user_imb_4", "user_imb_5", "user_imb_6"],
+    "dataEnvio": "2026-11-05T09:50:00.000Z"
+  },
+  {
+    "id": "demo-5",
+    "latitude": -8.0485,
+    "longitude": -34.8835,
+    "descricao": "Lixo acumulado na Travessa do Gusmão, bloqueando a passagem de pedestres.",
+    "status": "pendente",
+    "apoios": ["user_sa_1"],
+    "dataEnvio": "2026-11-16T16:45:00.000Z"
+  },
+  {
+    "id": "demo-6",
+    "latitude": -8.0795,
+    "longitude": -34.9105,
+    "descricao": "Restos de feira e caixotes acumulados perto do mercado público.",
+    "status": "resolvida",
+    "apoios": ["user_afog_1", "user_afog_2"],
+    "dataEnvio": "2026-11-09T15:25:00.000Z"
+  },
+  {
+    "id": "demo-7",
+    "latitude": -8.0560,
+    "longitude": -34.8985,
+    "descricao": "Sacos plásticos e galhos caídos na Praça do Derby.",
+    "status": "resolvida",
+    "apoios": ["user_derby_1"],
+    "dataEnvio": "2026-11-17T09:15:00.000Z"
+  },
+  {
+    "id": "demo-8",
+    "latitude": -8.0415,
+    "longitude": -34.8970,
+    "descricao": "Resíduos de jardinagem e sacos rasgados na Rua da Hora.",
+    "status": "pendente",
+    "apoios": [],
+    "dataEnvio": "2026-11-15T11:20:00.000Z"
+  },
+  {
+    "id": "demo-9",
+    "latitude": -8.0555,
+    "longitude": -34.9125,
+    "descricao": "Caixas de papelão e sacos de lixo amontoados na Rua Real da Torre.",
+    "status": "pendente",
+    "apoios": ["user_mad_1", "user_mad_2", "user_mad_3"],
+    "dataEnvio": "2026-11-11T10:30:00.000Z"
+  },
+  {
+    "id": "demo-10",
+    "latitude": -8.0515,
+    "longitude": -34.9315,
+    "descricao": "Entulho de construção civil despejado em terreno na Av. Caxangá.",
+    "status": "pendente",
+    "apoios": ["user_cord_1", "user_cord_2", "user_cord_3", "user_cord_4"],
+    "dataEnvio": "2026-10-30T16:00:00.000Z"
+  },
+  {
+    "id": "demo-11",
+    "latitude": -8.0885,
+    "longitude": -34.8875,
+    "descricao": "Resíduos e cocos secos acumulados na calçada da Av. Boa Viagem (Pina).",
+    "status": "resolvida",
+    "apoios": ["user_pina_1", "user_pina_2", "user_pina_3"],
+    "dataEnvio": "2026-11-07T12:00:00.000Z"
+  },
+  {
+    "id": "demo-12",
+    "latitude": -8.0715,
+    "longitude": -34.9275,
+    "descricao": "Lixo doméstico não recolhido há dias na Rua General San Martin.",
+    "status": "pendente",
+    "apoios": ["user_sm_1"],
+    "dataEnvio": "2026-11-14T08:00:00.000Z"
+  },
+  {
+    "id": "demo-13",
+    "latitude": -8.0325,
+    "longitude": -34.8960,
+    "descricao": "Restos de poda e lixo na calçada próxima ao Mercado da Encruzilhada.",
+    "status": "pendente",
+    "apoios": [],
+    "dataEnvio": "2026-11-18T16:00:00.000Z"
+  },
+  {
+    "id": "demo-14",
+    "latitude": -8.0440,
+    "longitude": -34.9030,
+    "descricao": "Sacos de lixo acumulados na esquina da Rua Amélia com Av. Rui Barbosa.",
+    "status": "resolvida",
+    "apoios": [],
+    "dataEnvio": "2026-11-13T17:10:00.000Z"
+  },
+  {
+    "id": "demo-15",
+    "latitude": -8.0925,
+    "longitude": -34.9390,
+    "descricao": "Acúmulo de lixo e móveis velhos na Rua José Natário.",
+    "status": "pendente",
+    "apoios": ["user_areias_1", "user_areias_2", "user_areias_3", "user_areias_4", "user_areias_5"],
+    "dataEnvio": "2026-11-01T11:30:00.000Z"
+  }
+]

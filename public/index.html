@@ -22,6 +22,10 @@
 </head>
 <body>
 
+<div class="faixa-demo" id="faixa-demo" hidden>
+  Modo demonstração: os pontos marcados como exemplo são fictícios.
+</div>
+
 <header class="site-nav">
   <div class="nav-inner">
     <a href="#topo" class="brand"><span class="brand-truck">🚛</span> Rota Limpa <span class="brand-tag">RECIFE</span></a>
@@ -109,6 +113,7 @@
           <span class="eco-ico">♻️</span> <span id="texto-toggle-ecopontos-principal">Mostrar EcoPontos</span>
         </button>
       </div>
+      <div class="mapa-resumo" id="mapa-resultado-resumo" hidden></div>
       <div id="mapa-resultado"></div>
       <p class="map-caption">📍 <strong>Mapa Integrado do Recife:</strong> Setores de coleta por turno (zonas coloridas), Denúncias da comunidade (vermelho = pendente, verde = resolvida) e EcoEstações (♻️).</p>
     </div>
@@ -451,6 +456,7 @@ if (typeof firebase.appCheck === 'function') {
 </script>
 
 <script src="app.js"></script>
+<script src="efeitos.js" defer></script>
 
 </body>
 </html>

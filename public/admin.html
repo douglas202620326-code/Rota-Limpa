@@ -57,17 +57,30 @@
         <p>Acompanhe os pontos reportados e marque como resolvidos quando a coleta for feita.</p>
       </div>
       <div class="admin-resumo">
-        <span><strong id="resumo-total">0</strong> no total</span>
-        <span class="pendente"><strong id="resumo-pendentes">0</strong> pendentes</span>
-        <span class="resolvida"><strong id="resumo-resolvidas">0</strong> resolvidas</span>
+        <span class="metrica-total"><strong id="resumo-total">0</strong> no total</span>
+        <span class="metrica-pendente pendente"><strong id="resumo-pendentes">0</strong> pendentes</span>
+        <span class="metrica-critica"><strong id="resumo-criticas">0</strong> críticas</span>
+        <span class="metrica-resolvida resolvida"><strong id="resumo-resolvidas">0</strong> resolvidas</span>
+        <span class="metrica-tempo-medio"><strong id="resumo-tempo-medio">—</strong> tempo médio</span>
       </div>
     </div>
 
     <div class="admin-acoes-topo">
-      <div class="admin-filtros" id="admin-filtros">
-        <button type="button" class="filtro-btn ativo" data-filtro="todas" aria-label="Filtrar todas as denúncias">Todas</button>
-        <button type="button" class="filtro-btn" data-filtro="pendente" aria-label="Filtrar denúncias pendentes">Pendentes</button>
-        <button type="button" class="filtro-btn" data-filtro="resolvida" aria-label="Filtrar denúncias resolvidas">Resolvidas</button>
+      <div class="admin-filtros-wrap">
+        <div class="admin-filtros" id="admin-filtros">
+          <button type="button" class="filtro-btn ativo" data-filtro="todas" aria-label="Filtrar todas as denúncias">Todas</button>
+          <button type="button" class="filtro-btn" data-filtro="pendente" aria-label="Filtrar denúncias pendentes">Pendentes</button>
+          <button type="button" class="filtro-btn" data-filtro="resolvida" aria-label="Filtrar denúncias resolvidas">Resolvidas</button>
+        </div>
+        <div class="admin-ordenacao-box">
+          <label for="admin-ordenacao" class="admin-ordenacao-label">Ordenar:</label>
+          <select id="admin-ordenacao" class="admin-select-ordenacao" aria-label="Ordenar denúncias">
+            <option value="recentes">Mais recentes</option>
+            <option value="antigas">Mais antigas</option>
+            <option value="urgentes">Mais urgentes</option>
+            <option value="apoiadas">Mais apoiadas</option>
+          </select>
+        </div>
       </div>
       <button type="button" class="btn btn-secundario btn-csv" id="btn-exportar-csv" aria-label="Exportar denúncias filtradas em formato CSV">
         📥 Exportar CSV

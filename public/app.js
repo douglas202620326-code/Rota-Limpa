@@ -917,27 +917,6 @@ function agruparRotasPorLogradouro(docs) {
   });
 }
 
-function calcularStatusTurnoConsolidado(turnoObj) {
-  if (turnoObj.faixasOriginais && turnoObj.faixasOriginais.length > 0) {
-    const statusLista = turnoObj.faixasOriginais.map(faixa =>
-      calcularStatusColetaHorario(turnoObj.diasSemana, faixa, turnoObj.turno)
-    );
-
-    const emAndamento = statusLista.find(s => s.status === 'em_andamento');
-    if (emAndamento) return emAndamento;
-
-    const passaHoje = statusLista.find(s => s.status === 'passa_hoje');
-    if (passaHoje) return passaHoje;
-
-    const outroDia = statusLista.find(s => s.status === 'outro_dia');
-    if (outroDia && statusLista.every(s => s.status === 'outro_dia')) return outroDia;
-
-    return statusLista[0];
-  }
-
-  return calcularStatusColetaHorario(turnoObj.diasSemana, turnoObj.faixaHorario, turnoObj.turno);
-}
-
 function renderResultados(docs) {
   resultadosEl.innerHTML = '';
   const todosGrupos = agruparRotasPorLogradouro(docs);
@@ -1276,6 +1255,45 @@ function montarCamadaEcopontosPrincipal() {
   });
 }
 
+function calcularDiasPendente(d) {
+  if (!d || !d.dataEnvio) return 0;
+  try {
+    const dataEnvioDate = typeof d.dataEnvio.toDate === 'function'
+      ? d.dataEnvio.toDate()
+      : (d.dataEnvio instanceof Date ? d.dataEnvio : new Date(d.dataEnvio));
+    if (dataEnvioDate instanceof Date && !isNaN(dataEnvioDate.getTime())) {
+      const diffMs = Date.now() - dataEnvioDate.getTime();
+      return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    }
+  } catch (e) {
+    return 0;
+  }
+  return 0;
+}
+
+function calcularTamanhoDenuncia(d) {
+  if (!d || d.status === 'resolvida') return 16;
+
+  let tamanho = 16;
+
+  // Apoios: 4 px por apoio, máximo 5 apoios (+20 px)
+  const totalApoios = Array.isArray(d.apoios) ? d.apoios.length : 0;
+  tamanho += Math.min(totalApoios, 5) * 4;
+
+  // Tempo parado: +4 px (>=3 dias), +8 px (>=7 dias), +12 px (>=14 dias)
+  const dias = calcularDiasPendente(d);
+  if (dias >= 14) {
+    tamanho += 12;
+  } else if (dias >= 7) {
+    tamanho += 8;
+  } else if (dias >= 3) {
+    tamanho += 4;
+  }
+
+  // Limite: o tamanho final não passa de 48 px
+  return Math.min(48, tamanho);
+}
+
 function renderizarDenunciasMapaPrincipal() {
   if (!mapaPrincipal || !camadaDenunciasPrincipal) return;
   camadaDenunciasPrincipal.clearLayers();
@@ -1306,8 +1324,11 @@ function renderizarDenunciasMapaPrincipal() {
         }
       }
 
+      const isDemo = Boolean(d.demo);
+      const seloDemo = isDemo ? `<div style="margin:4px 0;"><span class="badge-demo">🧪 Exemplo de demonstração</span></div>` : '';
+
       let botaoAcao = '';
-      if (!resolvida && isAutor) {
+      if (!resolvida && isAutor && !isDemo) {
         botaoAcao = `<br><button type="button" class="btn-marcar-resolvido" onclick="marcarComoResolvidoPeloAutor('${escapeHtml(id)}')">✔️ Marcar como Resolvido</button>`;
       }
 
@@ -1334,10 +1355,13 @@ function renderizarDenunciasMapaPrincipal() {
 
       const totalApoios = Array.isArray(d.apoios) ? d.apoios.length : 0;
       const jaApoiou = uidAtual && Array.isArray(d.apoios) && d.apoios.includes(uidAtual);
+      const diasPendente = calcularDiasPendente(d);
       const badgeCritico = totalApoios >= 3 ? `<div style="margin-top:4px;"><span class="badge-critico">🔥 Chamado Crítico (${totalApoios} apoios)</span></div>` : '';
+      const textoDias = diasPendente === 1 ? '⏳ Pendente há 1 dia' : `⏳ Pendente há ${diasPendente} dias`;
+      const linhaTempoPendente = !resolvida ? `<div style="margin:4px 0 2px; font-size:0.82rem; font-weight:700; color:var(--ink-soft);">${escapeHtml(textoDias)}</div>` : '';
 
       let botaoApoio = '';
-      if (!resolvida) {
+      if (!resolvida && !isDemo) {
         botaoApoio = `
           <button type="button" class="btn-apoiar ${jaApoiou ? 'apoiado' : ''}" onclick="alternarApoioDenuncia('${escapeHtml(id)}')">
             ${jaApoiou ? `✅ Você apoiou (${totalApoios})` : `👍 Eu também vi (${totalApoios})`}
@@ -1349,6 +1373,8 @@ function renderizarDenunciasMapaPrincipal() {
         <div class="popup-denuncia-card">
           <strong>Denúncia da comunidade</strong>
           ${resolvida ? ' <span style="color:#1D6B34; font-weight:700;">(resolvida)</span>' : ''}<br>
+          ${seloDemo}
+          ${linhaTempoPendente}
           ${escapeHtml(d.descricao ? d.descricao : 'Sem descrição adicional.')}
           ${badgeCritico}
           ${comparativoFotos}
@@ -1360,8 +1386,11 @@ function renderizarDenunciasMapaPrincipal() {
         </div>
       `;
 
-      const marker = L.marker([d.latitude, d.longitude], { icon: iconeDenunciaPorStatus(d.status) })
-        .bindPopup(popupHtml);
+      const tamanho = calcularTamanhoDenuncia(d);
+      const marker = L.marker([d.latitude, d.longitude], {
+        icon: iconeDenunciaPorStatus(d),
+        zIndexOffset: tamanho * 10
+      }).bindPopup(popupHtml);
       camadaDenunciasPrincipal.addLayer(marker);
     }
   });
@@ -1386,41 +1415,218 @@ function adicionarLegendaTurnosNoMapa(instanciaMapa) {
   legenda.addTo(instanciaMapa);
 }
 
+/* ---- Busca no mapa: denúncias próximas + resumo + rolagem ---- */
+
+const RAIO_DENUNCIAS_BUSCA_M = 1000;
+let tokenMapaBusca = 0;
+let circulosBuscaPrincipal = [];
+const cacheGeocodificacao = {};
+
+function distanciaMetros(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const rad = (g) => g * Math.PI / 180;
+  const dLat = rad(lat2 - lat1);
+  const dLng = rad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+const ABREVIACOES_LOGRADOURO = {
+  'R': 'Rua', 'AV': 'Avenida', 'TV': 'Travessa', 'LD': 'Ladeira', 'PC': 'Praça',
+  'EST': 'Estrada', 'AL': 'Alameda', 'BC': 'Beco', 'LGO': 'Largo', 'RDV': 'Rodovia'
+};
+
+// Fallback quando o setor não está no setores.json: busca o endereço no OpenStreetMap.
+async function geocodificarLogradouro(nome) {
+  const chave = normalizar(nome);
+  if (chave in cacheGeocodificacao) return cacheGeocodificacao[chave];
+
+  const partes = String(nome || '').trim().split(/\s+/);
+  const primeira = (partes[0] || '').replace('.', '').toUpperCase();
+  if (ABREVIACOES_LOGRADOURO[primeira]) partes[0] = ABREVIACOES_LOGRADOURO[primeira];
+  const consulta = encodeURIComponent(partes.join(' ') + ', Recife, Pernambuco, Brasil');
+
+  try {
+    const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br' +
+      '&viewbox=-35.05,-7.92,-34.82,-8.18&bounded=1&q=' + consulta;
+    const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const lista = await resp.json();
+    const achado = lista && lista[0]
+      ? { lat: parseFloat(lista[0].lat), lng: parseFloat(lista[0].lon) }
+      : null;
+    cacheGeocodificacao[chave] = achado;
+    return achado;
+  } catch (erro) {
+    console.warn('Geocodificação indisponível:', erro);
+    return null;
+  }
+}
+
+function plural(n, singular, pluralTxt) {
+  return n === 1 ? singular : pluralTxt;
+}
+
+function atualizarResumoBusca(info) {
+  const el = document.getElementById('mapa-resultado-resumo');
+  if (!el) return;
+  if (!info) {
+    el.hidden = true;
+    el.innerHTML = '';
+    return;
+  }
+
+  const { nome, pendentes, resolvidas, lat, lng } = info;
+  const nomeEsc = escapeHtml(nome);
+  const km = (RAIO_DENUNCIAS_BUSCA_M / 1000).toString().replace('.', ',');
+  let titulo;
+  let detalhe = '';
+
+  if (pendentes > 0) {
+    titulo = `🚨 ${pendentes} ${plural(pendentes, 'denúncia pendente', 'denúncias pendentes')} a até ${km} km de ${nomeEsc}`;
+    if (resolvidas > 0) {
+      detalhe = `${resolvidas} ${plural(resolvidas, 'já foi resolvida', 'já foram resolvidas')} na região.`;
+    } else {
+      detalhe = 'Toque nos pontos vermelhos do mapa para ver a foto e apoiar com "Eu também vi".';
+    }
+  } else if (resolvidas > 0) {
+    titulo = `✅ Nenhuma denúncia pendente a até ${km} km de ${nomeEsc}`;
+    detalhe = `${resolvidas} ${plural(resolvidas, 'já foi resolvida', 'já foram resolvidas')} na região.`;
+  } else {
+    titulo = `✅ Nenhuma denúncia registrada a até ${km} km de ${nomeEsc}`;
+    detalhe = 'Viu lixo acumulado por aqui? Você pode denunciar.';
+  }
+
+  el.innerHTML = `
+    <div class="mapa-resumo-texto">
+      <strong>${titulo}</strong>
+      <span>${escapeHtml(detalhe)}</span>
+    </div>
+    <button type="button" class="btn-denunciar-aqui" id="btn-denunciar-aqui">📸 Denunciar neste local</button>
+  `;
+  el.hidden = false;
+
+  const btn = document.getElementById('btn-denunciar-aqui');
+  if (btn) btn.addEventListener('click', () => denunciarNoLocalBuscado(lat, lng));
+}
+
+function denunciarNoLocalBuscado(lat, lng) {
+  abrirModalDenuncia(); // inicializa o mapa do modal se ainda não existir
+  atualizarPosicaoSelecionada(lat, lng, 'mapa');
+  if (mapa) mapa.setView([lat, lng], 16);
+  setTimeout(() => { if (mapa) mapa.invalidateSize(); }, 80);
+}
+
+function rolarParaResultados() {
+  const alvo = (turnoFiltrosEl && !turnoFiltrosEl.hidden) ? turnoFiltrosEl : resultadosEl;
+  if (!alvo) return;
+  const reduzir = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  requestAnimationFrame(() => {
+    alvo.scrollIntoView({ behavior: reduzir ? 'auto' : 'smooth', block: 'start' });
+  });
+}
+
 async function mostrarMapaResultado(docs) {
   const m = obterMapaResultado();
   if (!m) return;
 
+  const meuToken = ++tokenMapaBusca;
+  const itens = docs.map(d => (d.data ? d.data() : d));
+  const nomeBusca = (itens[0] && (itens[0].logradouro || itens[0].endereco)) || 'este local';
+
   const setoresInfo = await obterSetoresCache();
   const bySetor = new Map(setoresInfo.map(s => [s.setor, s]));
 
-  const setoresDosResultados = [...new Set(docs.map(d => (d.data ? d.data() : d).setor))]
+  const setoresDosResultados = [...new Set(itens.map(d => d.setor))]
     .map(setor => bySetor.get(setor))
     .filter(Boolean);
 
-  marcadoresBuscaPrincipal.forEach(marc => m.removeLayer(marc));
-  marcadoresBuscaPrincipal = [];
-
-  if (setoresDosResultados.length === 0) return;
-
-  setoresDosResultados.forEach(s => {
+  let pontos = setoresDosResultados.map(s => {
     const cor = corDoTurno(s.turnoPredominante);
-    const marcador = L.circleMarker([s.lat, s.lng], {
+    return {
+      lat: s.lat,
+      lng: s.lng,
+      cor,
+      popup: `<strong>📍 Rota Encontrada: Setor ${escapeHtml(s.setor)}</strong><br>Turno: ${escapeHtml(s.turnoPredominante)} &middot; ${escapeHtml(s.totalRuas)} rua(s) no setor`
+    };
+  });
+
+  if (pontos.length === 0 && nomeBusca !== 'este local') {
+    const geo = await geocodificarLogradouro(nomeBusca);
+    if (geo) {
+      pontos = [{
+        lat: geo.lat,
+        lng: geo.lng,
+        cor: '#2E9CCA',
+        popup: `<strong>📍 ${escapeHtml(nomeBusca)}</strong><br>Localização aproximada da rua`
+      }];
+    }
+  }
+
+  // Garante que as denúncias já chegaram do Firestore antes de contar as próximas
+  if (typeof promessaDenuncias !== 'undefined' && promessaDenuncias) {
+    try { await promessaDenuncias; } catch (e) { /* já tratado em carregarDenunciasNoMapa */ }
+  }
+
+  // Outra busca começou enquanto esta esperava: descarta
+  if (meuToken !== tokenMapaBusca) return;
+
+  marcadoresBuscaPrincipal.forEach(marc => m.removeLayer(marc));
+  circulosBuscaPrincipal.forEach(c => m.removeLayer(c));
+  marcadoresBuscaPrincipal = [];
+  circulosBuscaPrincipal = [];
+
+  if (pontos.length === 0) {
+    atualizarResumoBusca(null);
+    return;
+  }
+
+  pontos.forEach(p => {
+    const circulo = L.circle([p.lat, p.lng], {
+      radius: RAIO_DENUNCIAS_BUSCA_M,
+      color: '#111814',
+      weight: 2,
+      dashArray: '6 6',
+      fill: false,
+      interactive: false
+    }).addTo(m);
+    circulosBuscaPrincipal.push(circulo);
+
+    const marcador = L.circleMarker([p.lat, p.lng], {
       radius: 14,
       color: '#111814',
       weight: 3,
-      fillColor: cor,
+      fillColor: p.cor,
       fillOpacity: 0.95
     }).addTo(m);
-    marcador.bindPopup(`<strong>📍 Rota Encontrada: Setor ${escapeHtml(s.setor)}</strong><br>Turno: ${escapeHtml(s.turnoPredominante)} &middot; ${escapeHtml(s.totalRuas)} rua(s) no setor`);
+    marcador.bindPopup(p.popup);
     marcadoresBuscaPrincipal.push(marcador);
   });
 
-  if (setoresDosResultados.length === 1) {
-    m.setView([setoresDosResultados[0].lat, setoresDosResultados[0].lng], 15);
-    if (marcadoresBuscaPrincipal[0]) marcadoresBuscaPrincipal[0].openPopup();
-  } else {
-    const grupo = L.featureGroup(marcadoresBuscaPrincipal);
-    m.fitBounds(grupo.getBounds().pad(0.3));
+  // Denúncias dentro do raio de qualquer ponto encontrado
+  const proximas = denunciasMapaCache.filter(d =>
+    typeof d.latitude === 'number' && typeof d.longitude === 'number' &&
+    pontos.some(p => distanciaMetros(p.lat, p.lng, d.latitude, d.longitude) <= RAIO_DENUNCIAS_BUSCA_M)
+  );
+  const pendentes = proximas.filter(d => (d.status || 'pendente') !== 'resolvida').length;
+  const resolvidas = proximas.length - pendentes;
+
+  atualizarResumoBusca({
+    nome: nomeBusca,
+    pendentes,
+    resolvidas,
+    lat: pontos[0].lat,
+    lng: pontos[0].lng
+  });
+
+  // Enquadra o raio inteiro, para as denúncias próximas ficarem visíveis
+  const grupo = L.featureGroup(circulosBuscaPrincipal);
+  m.invalidateSize();
+  m.fitBounds(grupo.getBounds().pad(0.05), { maxZoom: 16 });
+
+  if (pontos.length === 1 && marcadoresBuscaPrincipal[0]) {
+    marcadoresBuscaPrincipal[0].openPopup();
   }
 }
 
@@ -1602,6 +1808,7 @@ async function buscarRota(termoForcado) {
 
     if (ultimosResultadosBusca.length === 0) {
       if (turnoFiltrosEl) turnoFiltrosEl.hidden = true;
+      atualizarResumoBusca(null);
       renderVazio(termo);
     } else {
       if (turnoFiltrosEl) turnoFiltrosEl.hidden = false;
@@ -1616,6 +1823,8 @@ async function buscarRota(termoForcado) {
       btnBuscar.disabled = false;
       btnBuscar.innerHTML = 'Buscar';
     }
+    // Rola até os horários de coleta (e o mapa logo abaixo)
+    rolarParaResultados();
   }
 }
 
@@ -1860,7 +2069,12 @@ function inicializarMapaDenuncias() {
     centralizarMapa(posicaoAtual.lat, posicaoAtual.lng);
   }
 
-  carregarDenunciasNoMapa();
+  // As denúncias já são carregadas na abertura da página; só redesenha no mapa do modal
+  if (denunciasMapaCache.length > 0) {
+    renderizarMarcadoresDenunciasNoMapa();
+  } else {
+    carregarDenunciasNoMapa();
+  }
   carregarSetoresNoMapa();
 }
 
@@ -1888,9 +2102,16 @@ let setoresCache = null; // compartilhado com o mapa de resultado da busca
 
 async function obterSetoresCache() {
   if (setoresCache) return setoresCache;
-  const resposta = await fetch('setores.json');
-  setoresCache = await resposta.json();
-  return setoresCache;
+  try {
+    const resposta = await fetch('setores.json');
+    if (!resposta.ok) throw new Error('HTTP ' + resposta.status);
+    setoresCache = await resposta.json();
+    return setoresCache;
+  } catch (erro) {
+    // Não guarda a falha em cache; o mapa da busca cai no geocodificador.
+    console.warn('setores.json indisponível:', erro);
+    return [];
+  }
 }
 
 async function carregarSetoresNoMapa() {
@@ -1950,13 +2171,22 @@ function adicionarLegendaTurnos() {
   legenda.addTo(mapa);
 }
 
-function iconeDenunciaPorStatus(status) {
-  const cor = status === 'resolvida' ? '#2BB673' : '#E4552E';
+function iconeDenunciaPorStatus(d) {
+  const status = typeof d === 'string' ? d : (d && d.status ? d.status : 'pendente');
+  const resolvida = status === 'resolvida';
+  const cor = resolvida ? '#2BB673' : '#E4552E';
+
+  const tamanho = typeof d === 'object' && d !== null ? calcularTamanhoDenuncia(d) : 16;
+  const totalApoios = typeof d === 'object' && d !== null && Array.isArray(d.apoios) ? d.apoios.length : 0;
+  const dias = typeof d === 'object' && d !== null ? calcularDiasPendente(d) : 0;
+  const isCritica = !resolvida && (totalApoios >= 3 || dias >= 14);
+  const classeCritica = isCritica ? 'denuncia-critica' : '';
+
   return L.divIcon({
-    className: '',
-    html: `<div style="background:${cor}; width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
+    className: classeCritica,
+    html: `<div class="${classeCritica}" style="background:${cor}; width:${tamanho}px; height:${tamanho}px; border-radius:50%; border:3px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.4); box-sizing:border-box;"></div>`,
+    iconSize: [tamanho, tamanho],
+    iconAnchor: [tamanho / 2, tamanho / 2]
   });
 }
 const iconeDenuncia = iconeDenunciaPorStatus('pendente');
@@ -1964,6 +2194,7 @@ const iconeDenuncia = iconeDenunciaPorStatus('pendente');
 let camadaMarcadoresDenuncias = null;
 let denunciasMapaCache = [];
 let filtroMapaDenuncias = 'todas';
+let promessaDenuncias = null; // carregamento inicial das denúncias (o mapa da busca espera por ele)
 
 function renderizarMarcadoresDenunciasNoMapa() {
   if (!mapa) return;
@@ -2000,8 +2231,11 @@ function renderizarMarcadoresDenunciasNoMapa() {
         }
       }
 
+      const isDemo = Boolean(d.demo);
+      const seloDemo = isDemo ? `<div style="margin:4px 0;"><span class="badge-demo">🧪 Exemplo de demonstração</span></div>` : '';
+
       let botaoAcao = '';
-      if (!resolvida && isAutor) {
+      if (!resolvida && isAutor && !isDemo) {
         botaoAcao = `<br><button type="button" class="btn-marcar-resolvido" onclick="marcarComoResolvidoPeloAutor('${escapeHtml(id)}')">✔️ Marcar como Resolvido</button>`;
       }
 
@@ -2028,10 +2262,13 @@ function renderizarMarcadoresDenunciasNoMapa() {
 
       const totalApoios = Array.isArray(d.apoios) ? d.apoios.length : 0;
       const jaApoiou = uidAtual && Array.isArray(d.apoios) && d.apoios.includes(uidAtual);
+      const diasPendente = calcularDiasPendente(d);
       const badgeCritico = totalApoios >= 3 ? `<div style="margin-top:4px;"><span class="badge-critico">🔥 Chamado Crítico (${totalApoios} apoios)</span></div>` : '';
+      const textoDias = diasPendente === 1 ? '⏳ Pendente há 1 dia' : `⏳ Pendente há ${diasPendente} dias`;
+      const linhaTempoPendente = !resolvida ? `<div style="margin:4px 0 2px; font-size:0.82rem; font-weight:700; color:var(--ink-soft);">${escapeHtml(textoDias)}</div>` : '';
 
       let botaoApoio = '';
-      if (!resolvida) {
+      if (!resolvida && !isDemo) {
         botaoApoio = `
           <button type="button" class="btn-apoiar ${jaApoiou ? 'apoiado' : ''}" onclick="alternarApoioDenuncia('${escapeHtml(id)}')">
             ${jaApoiou ? `✅ Você apoiou (${totalApoios})` : `👍 Eu também vi (${totalApoios})`}
@@ -2043,6 +2280,8 @@ function renderizarMarcadoresDenunciasNoMapa() {
         <div class="popup-denuncia-card">
           <strong>Denúncia da comunidade</strong>
           ${resolvida ? ' <span style="color:#1D6B34; font-weight:700;">(resolvida)</span>' : ''}<br>
+          ${seloDemo}
+          ${linhaTempoPendente}
           ${escapeHtml(d.descricao ? d.descricao : 'Sem descrição adicional.')}
           ${badgeCritico}
           ${comparativoFotos}
@@ -2054,8 +2293,11 @@ function renderizarMarcadoresDenunciasNoMapa() {
         </div>
       `;
 
-      const marker = L.marker([d.latitude, d.longitude], { icon: iconeDenunciaPorStatus(d.status) })
-        .bindPopup(popupHtml);
+      const tamanho = calcularTamanhoDenuncia(d);
+      const marker = L.marker([d.latitude, d.longitude], {
+        icon: iconeDenunciaPorStatus(d),
+        zIndexOffset: tamanho * 10
+      }).bindPopup(popupHtml);
       camadaMarcadoresDenuncias.addLayer(marker);
     }
   });
@@ -2078,6 +2320,29 @@ async function carregarDenunciasNoMapa() {
       total++;
       if (d.status === 'resolvida') resolvidas++;
     });
+
+    if (new URLSearchParams(location.search).get('demo') === '1') {
+      try {
+        const respDemo = await fetch('denuncias-demo.json');
+        if (respDemo.ok) {
+          const itensDemo = await respDemo.json();
+          if (Array.isArray(itensDemo)) {
+            itensDemo.forEach(item => {
+              const dataObj = item.dataEnvio ? new Date(item.dataEnvio) : new Date();
+              denunciasMapaCache.push({
+                ...item,
+                demo: true,
+                dataEnvio: {
+                  toDate: () => dataObj
+                }
+              });
+            });
+          }
+        }
+      } catch (errDemo) {
+        console.warn('Erro ao carregar dados de demonstração:', errDemo);
+      }
+    }
 
     renderizarMarcadoresDenunciasNoMapa();
     renderizarDenunciasMapaPrincipal();
@@ -2431,7 +2696,7 @@ async function calcularEExibirRankingSetores(denunciasPendentes) {
 
     const contagemPorSetor = new Map();
 
-    denunciasPendentes.forEach(d => {
+    denunciasPendentes.filter(d => !d.demo).forEach(d => {
       if (typeof d.latitude !== 'number' || typeof d.longitude !== 'number') return;
       let maisProximo = null;
       let menorDist = Infinity;
@@ -2643,8 +2908,20 @@ formDenuncia.addEventListener('submit', async (e) => {
    INICIALIZAÇÃO & OBSERVERS
    --------------------------------------------------------------------- */
 
+function verificarModoDemo() {
+  if (new URLSearchParams(window.location.search).get('demo') === '1') {
+    const faixa = document.getElementById('faixa-demo');
+    if (faixa) {
+      faixa.hidden = false;
+      document.body.classList.add('com-faixa-demo');
+    }
+  }
+}
+
+verificarModoDemo();
 iniciarGeolocalizacao();
 inicializarMapaPrincipal();
+promessaDenuncias = carregarDenunciasNoMapa(); // denúncias já aparecem no mapa principal ao abrir o site
 carregarEstatisticasGerais();
 
 // Observer para lazy load do mapa quando o elemento #map entrar na viewport
